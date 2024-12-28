@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "generate": "node src/generateApi.js"
+    "generate": "node src/generateApi.js",
+    "postinstall": "pnpm install"
   },
   "keywords": [],
   "author": "",
@@ -12,8 +13,9 @@
     "@anthropic-ai/sdk": "^0.18.0",
     "@langchain/anthropic": "^0.1.1",
     "@langchain/core": "^0.1.48",
-    "@octokit/rest": "^21.0.2",
+    "@langchain/community": "^0.0.36",
     "langchain": "^0.1.25",
+    "@octokit/rest": "^21.0.2",
     "zod": "^3.24.1"
   }
 }

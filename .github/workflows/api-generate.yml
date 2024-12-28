@@ -23,10 +23,23 @@ jobs:
         with:
           version: 8
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: |
           cd langchain-api-generator
-          pnpm install
+          pnpm install --frozen-lockfile
 
       - name: Parse issue content
         id: parse
@@ -48,7 +61,7 @@ jobs:
       - name: Generate API code
         run: |
           cd langchain-api-generator
-          pnpm node src/generateApi.js
+          pnpm generate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
