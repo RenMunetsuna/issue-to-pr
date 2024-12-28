@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "generate": "node src/generateApi.js",
-    "postinstall": "pnpm install"
+    "generate": "node src/generateApi.js"
   },
   "keywords": [],
   "author": "",
