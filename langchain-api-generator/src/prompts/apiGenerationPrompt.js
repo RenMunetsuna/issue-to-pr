@@ -21,6 +21,7 @@ export const createApiGenerationPrompt = () => {
 \${prismaSchema}
 
 Prismaのスキーマを確認して、データベースのカラム名や型を確認してください
+今回作成するファイルは全て同じディレクトリに配置してください
 
 # Issue情報
 タイトル: \${title}
