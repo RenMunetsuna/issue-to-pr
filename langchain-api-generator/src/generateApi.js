@@ -48,13 +48,28 @@ class ApiGenerator {
       const databaseDoc = this.readDocFile('DATABASE_SERVICES.md');
       const testingDoc = this.readDocFile('TESTING.md');
 
-      console.log('Generating code from issue:', {
-        title: issue.title,
-        endpoint: issue.content
-          .match(/エンドポイント[^\n]*\n+([^\n]+)/)?.[1]
-          ?.trim(),
-        method: issue.content.match(/メソッド[^\n]*\n+([^\n]+)/)?.[1]?.trim()
-      });
+      if (!issue || typeof issue !== 'object') {
+        throw new Error('Invalid issue object');
+      }
+
+      console.log('Validating issue content...');
+      const { title, content } = issue;
+      if (!title || !content) {
+        throw new Error(`Invalid issue format. Required fields are missing:
+          title: ${title ? 'present' : 'missing'}
+          content: ${content ? 'present' : 'missing'}`);
+      }
+
+      const issueInfo = {
+        title,
+        endpoint:
+          content.match(/エンドポイント[^\n]*\n+([^\n]+)/)?.[1]?.trim() ||
+          'Not specified',
+        method:
+          content.match(/メソッド[^\n]*\n+([^\n]+)/)?.[1]?.trim() ||
+          'Not specified'
+      };
+      console.log('Parsed issue info:', issueInfo);
 
       // プロンプトテンプレートの設定
       const prompt = new PromptTemplate({
@@ -231,7 +246,7 @@ export const getUserFromDB = async ({
   };
 };
 
-���成するファイル：
+生成するファイル：
 1. _handlers.ts - メインのコントローラーファイル
 2. schema.ts - リクエスト/レスポンスのスキーマ定義
 3. extractParamsFor{操作名}.ts - パラメータ抽出とバリデーション
@@ -380,18 +395,32 @@ export async function main() {
       ISSUE_CONTENT
     } = process.env;
 
-    console.log('Environment variables loaded');
-    console.log('Issue number:', ISSUE_NUMBER);
-    console.log('Repo owner:', REPO_OWNER);
-    console.log('Repo name:', REPO_NAME);
+    console.log('Validating environment variables...');
+    const missingVars = [];
+    if (!ANTHROPIC_API_KEY) missingVars.push('ANTHROPIC_API_KEY');
+    if (!GITHUB_TOKEN) missingVars.push('GITHUB_TOKEN');
+    if (!ISSUE_NUMBER) missingVars.push('ISSUE_NUMBER');
+    if (!REPO_OWNER) missingVars.push('REPO_OWNER');
+    if (!REPO_NAME) missingVars.push('REPO_NAME');
+    if (!ISSUE_CONTENT) missingVars.push('ISSUE_CONTENT');
 
-    if (!ANTHROPIC_API_KEY || !GITHUB_TOKEN) {
-      throw new Error('Required environment variables are missing');
+    if (missingVars.length > 0) {
+      throw new Error(
+        `Missing required environment variables: ${missingVars.join(', ')}`
+      );
     }
 
-    const issue = JSON.parse(ISSUE_CONTENT);
-    console.log('Parsed issue content:', JSON.stringify(issue, null, 2));
+    console.log('Parsing issue content...');
+    let issue;
+    try {
+      issue = JSON.parse(ISSUE_CONTENT);
+    } catch (error) {
+      throw new Error(
+        `Failed to parse ISSUE_CONTENT: ${error.message}\nContent: ${ISSUE_CONTENT}`
+      );
+    }
 
+    console.log('Initializing API generator...');
     const generator = new ApiGenerator(
       ANTHROPIC_API_KEY,
       GITHUB_TOKEN,
@@ -401,6 +430,9 @@ export async function main() {
 
     console.log('Generating API code...');
     const generatedFiles = await generator.generateApiCode(issue);
+    if (!generatedFiles || Object.keys(generatedFiles).length === 0) {
+      throw new Error('No files were generated');
+    }
     console.log('Generated files:', Object.keys(generatedFiles));
 
     console.log('Creating pull request...');
@@ -413,6 +445,9 @@ export async function main() {
     console.log('Pull request created successfully');
   } catch (error) {
     console.error('Error in main function:', error);
+    if (error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
     process.exit(1);
   }
 }
