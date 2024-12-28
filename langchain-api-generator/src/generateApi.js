@@ -40,16 +40,25 @@ class ApiGenerator {
    * @returns {Promise<object>} 生成されたコード
    */
   async generateApiCode(issue) {
-    // プロジェクトのガイドラインドキュメントを読み込む
-    const architectureDoc = this.readDocFile('ARCHITECTURE.md');
-    const schemaDoc = this.readDocFile('SCHEMA.md');
-    const controllerDoc = this.readDocFile('CONTROLLER.md');
-    const databaseDoc = this.readDocFile('DATABASE_SERVICES.md');
-    const testingDoc = this.readDocFile('TESTING.md');
+    try {
+      console.log('Reading project documentation...');
+      const architectureDoc = this.readDocFile('ARCHITECTURE.md');
+      const schemaDoc = this.readDocFile('SCHEMA.md');
+      const controllerDoc = this.readDocFile('CONTROLLER.md');
+      const databaseDoc = this.readDocFile('DATABASE_SERVICES.md');
+      const testingDoc = this.readDocFile('TESTING.md');
 
-    // プロンプトテンプレートの設定
-    const prompt = new PromptTemplate({
-      template: `あなたはTypeScriptのエキスパートエンジニアです。
+      console.log('Generating code from issue:', {
+        title: issue.title,
+        endpoint: issue.content
+          .match(/エンドポイント[^\n]*\n+([^\n]+)/)?.[1]
+          ?.trim(),
+        method: issue.content.match(/メソッド[^\n]*\n+([^\n]+)/)?.[1]?.trim()
+      });
+
+      // プロンプトテンプレートの設定
+      const prompt = new PromptTemplate({
+        template: `あなたはTypeScriptのエキスパートエンジニアです。
 以下のプロジェクトのアーキテクチャとガイドラインに従って、APIエンドポイントを実装してください。
 
 # プロジェクトアーキテクチャ
@@ -74,7 +83,7 @@ class ApiGenerator {
 
 以下の要件に従ってください：
 1. コードは TypeScript で記述してください
-2. エラーハンドリングを適切に実装して��ださい
+2. エラーハンドリングを適切に実装してください
 3. テストコードは Jest を使用してください
 4. コードはクリーンアーキテクチャの原則に従ってください
 5. 必要なインポート文をすべて含めてください
@@ -222,48 +231,60 @@ export const getUserFromDB = async ({
   };
 };
 
-生成するファイル：
+���成するファイル：
 1. _handlers.ts - メインのコントローラーファイル
 2. schema.ts - リクエスト/レスポンスのスキーマ定義
 3. extractParamsFor{操作名}.ts - パラメータ抽出とバリデーション
 4. {操作名}FromDB.ts or {操作名}InDB.ts - データベース操作を含むサービス実装
 
 各ファイルの内容は、プロジェクトのアーキテクチャとガイドラインに厳密に従ってください。`,
-      inputVariables: [
-        'architecture',
-        'schema',
-        'controller',
-        'database',
-        'testing',
-        'title',
-        'content'
-      ]
-    });
+        inputVariables: [
+          'architecture',
+          'schema',
+          'controller',
+          'database',
+          'testing',
+          'title',
+          'content'
+        ]
+      });
 
-    const formattedPrompt = await prompt.format({
-      architecture: architectureDoc,
-      schema: schemaDoc,
-      controller: controllerDoc,
-      database: databaseDoc,
-      testing: testingDoc,
-      title: issue.title,
-      content: issue.content
-    });
+      const formattedPrompt = await prompt.format({
+        architecture: architectureDoc,
+        schema: schemaDoc,
+        controller: controllerDoc,
+        database: databaseDoc,
+        testing: testingDoc,
+        title: issue.title,
+        content: issue.content
+      });
 
-    const response = await this.model.invoke([
-      {
-        role: 'system',
-        content:
-          'TypeScriptのエキスパートエンジニアとして、クリーンで保守性の高いコードを生成してください。'
-      },
-      {
-        role: 'user',
-        content: formattedPrompt
-      }
-    ]);
+      const response = await this.model.invoke([
+        {
+          role: 'system',
+          content:
+            'TypeScriptのエキスパートエンジニアとして、クリーンで保守性の高いコードを生成してください。'
+        },
+        {
+          role: 'user',
+          content: formattedPrompt
+        }
+      ]);
 
-    // 生成されたコードをファイルごとに分割
-    const sections = response.content.split('###').filter(Boolean);
+      console.log('Code generation completed');
+      const files = this.parseGeneratedCode(response.content);
+      console.log('Generated files:', Object.keys(files));
+
+      return files;
+    } catch (error) {
+      console.error('Error in generateApiCode:', error);
+      throw error;
+    }
+  }
+
+  parseGeneratedCode(content) {
+    console.log('Parsing generated code...');
+    const sections = content.split('###').filter(Boolean);
     const files = {};
 
     sections.forEach((section) => {
@@ -272,6 +293,7 @@ export const getUserFromDB = async ({
         const fileName = titleMatch[1];
         const content = section.replace(/^\s*([\w/.]+\.ts)\s*$/m, '').trim();
         files[fileName] = content;
+        console.log(`Parsed file: ${fileName} (${content.length} bytes)`);
       }
     });
 
