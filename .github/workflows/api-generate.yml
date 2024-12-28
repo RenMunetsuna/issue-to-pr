@@ -93,21 +93,20 @@ jobs:
         with:
           script: |
             try {
-              console.log('Checking for PRs...');
+              console.log('PRを確認中...');
               const prs = await github.rest.pulls.list({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 state: 'open',
                 head: `api-generate-${context.payload.issue.number}`
               });
-              console.log('API Response:', JSON.stringify(prs, null, 2));
               if (prs.data.length === 0) {
-                console.log('No PR was created');
-                core.setFailed('PR creation failed');
+                console.log('PRが作成されていません');
+                core.setFailed('PRの作成に失敗しました');
               } else {
-                console.log('PR was created successfully:', prs.data[0].html_url);
+                console.log('PRが正常に作成されました:', prs.data[0].html_url);
               }
             } catch (error) {
-              console.log('Error checking PR:', error);
-              core.setFailed(`Failed to check PR: ${error.message}`);
+              console.log('PRの確認中にエラーが発生しました:', error);
+              core.setFailed(`PRの確認に失敗しました: ${error.message}`);
             }
