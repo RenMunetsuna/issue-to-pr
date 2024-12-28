@@ -15,7 +15,9 @@ export const readDocFile = (filename) => {
     const filePath = path.join(WORKSPACE_ROOT, 'docs', filename);
     return readFileSync(filePath, 'utf-8');
   } catch (error) {
-    console.warn(`Warning: Could not read ${filename}. Error:`, error.message);
+    console.warn(
+      `ドキュメントファイル ${filename} の読み込みに失敗しました: ${error.message}`
+    );
     return '';
   }
 };
