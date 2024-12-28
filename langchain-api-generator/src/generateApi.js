@@ -108,28 +108,28 @@ class ApiGenerator {
 
       // プロンプトテンプレートの設定
       const prompt = new PromptTemplate({
-        template: String.raw`あなたはTypeScriptのエキスパートエンジニアです。
+        template: `あなたはTypeScriptのエキスパートエンジニアです。
 以下のプロジェクトのアーキテクチャとガイドラインに従って、APIエンドポイントを実装してください。
 
 # プロジェクトアーキテクチャ
-${architecture}
+\${architecture}
 
 # スキーマガイドライン
-${schema}
+\${schema}
 
 # コントローラーガイドライン
-${controller}
+\${controller}
 
 # データベースサービスガイドライン
-${database}
+\${database}
 
 # テストガイドライン
-${testing}
+\${testing}
 
 # Issue情報
-タイトル: ${title}
+タイトル: \${title}
 内容:
-${content}
+\${content}
 
 以下の要件に従ってください：
 1. コードは TypeScript で記述してください
@@ -141,153 +141,7 @@ ${content}
 7. パフォーマンスを考慮したPrismaクエリを実装してください
 8. 適切なエラーコードとステータスコードを使用してください
 
-以下のファイルを生成してください。各ファイルは ### ファイル名 ### で区切って出力してください。
-出力例：
-
-### _handlers.ts ###
-import type { FastifyPluginAsync } from 'fastify';
-import { pipe } from 'ramda';
-import { match } from 'ts-pattern';
-import { extractParamsForGetUser } from './extractParamsForGetUser';
-import { getUserFromDB } from './getUserFromDB';
-import type { GetUserRequest, GetUserResponse } from './schema';
-import { schemas } from './schema';
-
-export const userHandler: FastifyPluginAsync = async (fastify) => {
-  fastify.get<{
-    Params: GetUserRequest['params'];
-    Reply: GetUserResponse;
-  }>('/:userId', {
-    schema: schemas.get,
-    handler: async (request, reply) => {
-      const result = await pipe(
-        request,
-        extractParamsForGetUser,
-        async (params) =>
-          params.success
-            ? await getUserFromDB({ ...params.data, prisma: fastify.prisma })
-            : params
-      )();
-
-      return match(result)
-        .with({ success: true }, ({ data }) => reply.code(200).send(data))
-        .with({ error: { errorCode: 400 } }, () =>
-          reply.code(400).send({ error: 'リクエストが不正です' })
-        )
-        .with({ error: { errorCode: 404 } }, () =>
-          reply.code(404).send({ error: 'ユーザーが見つかりません' })
-        )
-        .exhaustive();
-    }
-  });
-};
-
-### schema.ts ###
-import { UserStatus } from '@prisma/client';
-import type { JSONSchema } from 'json-schema-to-ts';
-import type { GenerateRequestTypes, GenerateResponseTypes } from '@/types';
-
-export const schemas = {
-  get: {
-    tags: ['user'],
-    description: 'ユーザー情報取得',
-    params: {
-      type: 'object',
-      properties: {
-        userId: { type: 'string' }
-      },
-      required: ['userId']
-    } as const satisfies JSONSchema,
-    response: {
-      200: {
-        type: 'object',
-        properties: {
-          userId: { type: 'string' },
-          name: { type: 'string' },
-          status: {
-            type: 'string',
-            enum: Object.values(UserStatus)
-          }
-        },
-        required: ['userId', 'name', 'status']
-      } as const satisfies JSONSchema
-    }
-  }
-};
-
-export type GetUserRequest = GenerateRequestTypes<typeof schemas.get>;
-export type GetUserResponse = GenerateResponseTypes<typeof schemas.get.response>;
-
-### extractParamsForGetUser.ts ###
-import type { FastifyRequest } from 'fastify';
-import type { Result } from '@/types';
-import type { GetUserRequest } from './schema';
-
-export const extractParamsForGetUser = (
-  request: FastifyRequest<GetUserRequest>
-): Result<{ userId: string }> => {
-  const { userId } = request.params;
-  
-  if (!userId.match(/^[a-z0-9]+$/)) {
-    return {
-      success: false,
-      error: { errorCode: 400 }
-    };
-  }
-
-  return {
-    success: true,
-    data: { userId }
-  };
-};
-
-### getUserFromDB.ts ###
-import type { PrismaClient } from '@prisma/client';
-import type { Result } from '@/types';
-import type { GetUserResponse } from './schema';
-
-interface GetUserParams {
-  userId: string;
-  prisma: PrismaClient;
-}
-
-export const getUserFromDB = async ({
-  userId,
-  prisma
-}: GetUserParams): Promise<Result<GetUserResponse[200]>> => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      status: true
-    }
-  });
-
-  if (!user) {
-    return {
-      success: false,
-      error: { errorCode: 404 }
-    };
-  }
-
-  return {
-    success: true,
-    data: {
-      userId: user.id,
-      name: user.name,
-      status: user.status
-    }
-  };
-};
-
-生成するファイル：
-1. _handlers.ts - メインのコントローラーファイル
-2. schema.ts - リクエスト/レスポンスのスキーマ定義
-3. extractParamsFor{操作名}.ts - パラメータ抽出とバリデーション
-4. {操作名}FromDB.ts or {操作名}InDB.ts - データベース操作を含むサービス実装
-
-各ファイルの内容は、プロジェクトのアーキテクチャとガイドラインに厳密に従ってください。`,
+以下のファイルを生成してください。各ファイルは ### ファイル名 ### で区切って出力してください。`,
         inputVariables: [
           'architecture',
           'schema',
