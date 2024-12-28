@@ -108,28 +108,28 @@ class ApiGenerator {
 
       // プロンプトテンプレートの設定
       const prompt = new PromptTemplate({
-        template: `あなたはTypeScriptのエキスパートエンジニアです。
+        template: String.raw`あなたはTypeScriptのエキスパートエンジニアです。
 以下のプロジェクトのアーキテクチャとガイドラインに従って、APIエンドポイントを実装してください。
 
 # プロジェクトアーキテクチャ
-{{architecture}}
+{architecture}
 
 # スキーマガイドライン
-{{schema}}
+{schema}
 
 # コントローラーガイドライン
-{{controller}}
+{controller}
 
 # データベースサービスガイドライン
-{{database}}
+{database}
 
 # テストガイドライン
-{{testing}}
+{testing}
 
 # Issue情報
-タイトル: {{title}}
+タイトル: {title}
 内容:
-{{content}}
+{content}
 
 以下の要件に従ってください：
 1. コードは TypeScript で記述してください
@@ -313,7 +313,7 @@ export const getUserFromDB = async ({
         {
           role: 'system',
           content:
-            'TypeScriptのエキスパートエンジニアとして、クリーンで保守性の高いコードを生成してください。'
+            'TypeScriptのエキスパートエンジニアとして、クリーンで保守性��高いコードを生成してください。'
         },
         {
           role: 'user',
