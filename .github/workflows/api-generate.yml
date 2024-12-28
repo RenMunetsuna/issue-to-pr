@@ -73,6 +73,7 @@ jobs:
           echo "Starting API generation..."
           echo "Issue content: $ISSUE_CONTENT"
           echo "Current directory: $(pwd)"
+          echo "ANTHROPIC_API_KEY prefix: ${ANTHROPIC_API_KEY:0:4}"
           echo "Directory contents:"
           ls -la
           echo "Running generate script..."
