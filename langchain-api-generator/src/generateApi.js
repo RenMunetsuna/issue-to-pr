@@ -1,10 +1,13 @@
 import { ChatAnthropic } from '@langchain/anthropic';
-import { createApiGenerationPrompt } from './prompt/apiGenerationPrompt.js';
+import { createApiGenerationPrompt } from './prompts/apiGenerationPrompt.js';
 import { createPullRequest } from './github/PullRequestCreator.js';
 import { loadAllDocuments } from './utils/documentLoader.js';
 import { parseGeneratedCode } from './utils/codeParser.js';
 import { validateEnvVars } from './utils/envValidator.js';
 import { parseAndValidateIssue } from './utils/issueValidator.js';
+import fs from 'fs';
+import path from 'path';
+import { fileLoader } from './utils/fileLoader.js';
 
 /**
  * APIコードを生成する
@@ -23,10 +26,13 @@ const generateApiCode = async ({ anthropicApiKey, issue }) => {
       'DATABASE_SERVICES.md'
     ]);
 
+    const prismaSchema = fileLoader('../../apps/server/prisma/schema.prisma');
+
     // プロンプトの作成
     const prompt = createApiGenerationPrompt();
     const formattedPrompt = await prompt.format({
       ...docs,
+      prismaSchema,
       title: issue.title,
       content: issue.content
     });

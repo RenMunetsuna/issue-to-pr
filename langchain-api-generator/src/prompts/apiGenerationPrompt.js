@@ -3,7 +3,7 @@ import { PromptTemplate } from '@langchain/core/prompts';
 export const createApiGenerationPrompt = () => {
   return new PromptTemplate({
     template: `あなたはTypeScriptのエキスパートエンジニアです。
-以下のプロジェクトのアーキテクチャとガイドラインに従って、APIエンドポイントを実装してください。
+以下のプロジェクトのアーキテクチャとガイドラインを確認してください
 
 # プロジェクトアーキテクチャ
 \${architecture}
@@ -16,6 +16,11 @@ export const createApiGenerationPrompt = () => {
 
 # データベースサービスガイドライン
 \${database_services}
+
+# Prismaスキーマ
+\${prismaSchema}
+
+Prismaのスキーマを確認して、データベースのカラム名や型を確認してください
 
 # Issue情報
 タイトル: \${title}
@@ -32,7 +37,7 @@ export const createApiGenerationPrompt = () => {
 7. 適切なエラーコードとステータスコードを使用してください
 
 出力フォーマット:
-各ファイルは以下の形式で出力してください：
+各ファイルは以下の形式で出力してください。コードの解説などは不要です：
 
 ### ファイル名.ts ###
 \`\`\`typescript
