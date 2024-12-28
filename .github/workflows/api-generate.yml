@@ -76,7 +76,7 @@ jobs:
           echo "Directory contents:"
           ls -la
           echo "Running generate script..."
-          NODE_DEBUG=* pnpm generate || {
+          DEBUG=langchain pnpm generate || {
             echo "Generation failed with exit code $?"
             echo "Error output:"
             cat error.log || true
@@ -92,7 +92,7 @@ jobs:
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
           ISSUE_CONTENT: ${{ steps.parse.outputs.result }}
-          DEBUG: '*'
+          LOG_LEVEL: 'info'
 
       - name: Check PR creation
         if: success()
