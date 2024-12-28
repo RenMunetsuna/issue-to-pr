@@ -74,7 +74,7 @@ class ApiGenerator {
 
 以下の要件に従ってください：
 1. コードは TypeScript で記述してください
-2. エラーハンドリングを適切に実装してください
+2. エラーハンドリングを適切に実装して��ださい
 3. テストコードは Jest を使用してください
 4. コードはクリーンアーキテクチャの原則に従ってください
 5. 必要なインポート文をすべて含めてください
@@ -286,59 +286,59 @@ export const getUserFromDB = async ({
    * @param {object} generatedFiles - 生成されたファイル群
    */
   async createPullRequest(owner, repo, issueNumber, generatedFiles) {
-    // ブランチ名を生成
-    const branchName = `feature/api-${issueNumber}`;
-
     try {
-      // デフォルトブランチの最新コミットを取得
-      const { data: repo } = await this.octokit.repos.get({
-        owner,
-        repo
-      });
-      const defaultBranch = repo.default_branch;
-      const { data: ref } = await this.octokit.git.getRef({
+      console.log('Creating branch...');
+      const branchName = `api-generate-${issueNumber}`;
+      const defaultBranch = 'main';
+
+      // Get the SHA of the default branch
+      console.log('Getting default branch SHA...');
+      const { data: defaultBranchData } = await this.octokit.repos.getBranch({
         owner,
         repo,
-        ref: `heads/${defaultBranch}`
+        branch: defaultBranch
       });
-      const sha = ref.object.sha;
+      const baseSha = defaultBranchData.commit.sha;
+      console.log('Default branch SHA:', baseSha);
 
-      // 新しいブランチを作成
+      // Create a new branch
+      console.log(`Creating branch: ${branchName}`);
       await this.octokit.git.createRef({
         owner,
         repo,
         ref: `refs/heads/${branchName}`,
-        sha
+        sha: baseSha
       });
 
-      // 各ファイルをコミット
-      for (const [fileName, content] of Object.entries(generatedFiles)) {
+      // Create commits for each file
+      console.log('Creating commits...');
+      for (const [path, content] of Object.entries(generatedFiles)) {
+        console.log(`Creating commit for file: ${path}`);
         await this.octokit.repos.createOrUpdateFileContents({
           owner,
           repo,
-          path: `apps/server/src/routes/${fileName}`,
-          message: `feat: Add ${fileName}`,
+          path,
+          message: `feat: Add ${path}`,
           content: Buffer.from(content).toString('base64'),
           branch: branchName
         });
       }
 
-      // PRを作成
-      await this.octokit.pulls.create({
+      // Create pull request
+      console.log('Creating pull request...');
+      const { data: pr } = await this.octokit.pulls.create({
         owner,
         repo,
-        title: `API: ${issueNumber}の実装`,
-        body: `Issue #${issueNumber} の内容に基づいてAPIを自動生成しました。
-
-## 生成されたファイル
-${Object.keys(generatedFiles)
-  .map((file) => `- ${file}`)
-  .join('\n')}`,
+        title: `API Generation #${issueNumber}`,
+        body: `Closes #${issueNumber}`,
         head: branchName,
         base: defaultBranch
       });
+
+      console.log('Pull request created:', pr.html_url);
+      return pr;
     } catch (error) {
-      console.error('Error creating PR:', error);
+      console.error('Error in createPullRequest:', error);
       throw error;
     }
   }
@@ -346,48 +346,56 @@ ${Object.keys(generatedFiles)
 
 // GitHub Actions から呼び出されるメイン関数
 export async function main() {
-  // 必要な環境変数を取得
-  const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-  const githubToken = process.env.GITHUB_TOKEN;
-  const workspaceRoot = process.env.GITHUB_WORKSPACE || process.cwd();
-  const issueContent = process.env.ISSUE_CONTENT;
-  const issueNumber = process.env.ISSUE_NUMBER;
-  const repoOwner = process.env.REPO_OWNER;
-  const repoName = process.env.REPO_NAME;
-
-  // 環境変数のバリデーション
-  if (
-    !anthropicApiKey ||
-    !githubToken ||
-    !issueContent ||
-    !issueNumber ||
-    !repoOwner ||
-    !repoName
-  ) {
-    throw new Error('Required environment variables are not set');
-  }
-
-  // APIジェネレーターを初期化
-  const generator = new ApiGenerator(
-    anthropicApiKey,
-    githubToken,
-    workspaceRoot
-  );
-
   try {
-    // Issueの内容を解析
-    const issue = JSON.parse(issueContent);
-    // APIコードを生成
+    console.log('Starting main function...');
+
+    const {
+      ANTHROPIC_API_KEY,
+      GITHUB_TOKEN,
+      ISSUE_NUMBER,
+      REPO_OWNER,
+      REPO_NAME,
+      ISSUE_CONTENT
+    } = process.env;
+
+    console.log('Environment variables loaded');
+    console.log('Issue number:', ISSUE_NUMBER);
+    console.log('Repo owner:', REPO_OWNER);
+    console.log('Repo name:', REPO_NAME);
+
+    if (!ANTHROPIC_API_KEY || !GITHUB_TOKEN) {
+      throw new Error('Required environment variables are missing');
+    }
+
+    const issue = JSON.parse(ISSUE_CONTENT);
+    console.log('Parsed issue content:', JSON.stringify(issue, null, 2));
+
+    const generator = new ApiGenerator(
+      ANTHROPIC_API_KEY,
+      GITHUB_TOKEN,
+      process.cwd()
+    );
+    console.log('ApiGenerator initialized');
+
+    console.log('Generating API code...');
     const generatedFiles = await generator.generateApiCode(issue);
-    // PRを作成
+    console.log('Generated files:', Object.keys(generatedFiles));
+
+    console.log('Creating pull request...');
     await generator.createPullRequest(
-      repoOwner,
-      repoName,
-      issueNumber,
+      REPO_OWNER,
+      REPO_NAME,
+      ISSUE_NUMBER,
       generatedFiles
     );
+    console.log('Pull request created successfully');
   } catch (error) {
-    console.error('Error generating API:', error);
-    throw error;
+    console.error('Error in main function:', error);
+    process.exit(1);
   }
 }
+
+main().catch((error) => {
+  console.error('Unhandled error:', error);
+  process.exit(1);
+});
