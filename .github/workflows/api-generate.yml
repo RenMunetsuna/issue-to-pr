@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd langchain-api-generator
-          pnpm install --no-frozen-lockfile
+          pnpm install
 
       - name: Parse issue content
         id: parse
