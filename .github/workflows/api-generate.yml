@@ -1,0 +1,51 @@
+name: API Generate Workflow
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  generate-api:
+    if: contains(github.event.issue.labels.*.name, 'api-generate')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse issue body
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body;
+            const sections = {
+              method: body.match(/### メソッド\n\n([^#]*)/)?.[1]?.trim(),
+              endpoint: body.match(/### エンドポイント\n\n([^#]*)/)?.[1]?.trim(),
+              queryParams: body.match(/#### クエリパラメータ\n\n([^#]*)/)?.[1]?.trim(),
+              requestBody: body.match(/#### リクエストボディ\n\n([^#]*)/)?.[1]?.trim(),
+              response: body.match(/### レスポンス\n\n([^#]*)/)?.[1]?.trim(),
+              notes: body.match(/### 補足\n\n([^#]*)/)?.[1]?.trim()
+            };
+            core.setOutput('parsed', JSON.stringify(sections));
+
+      - name: Generate API files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const parsed = JSON.parse(process.env.PARSED_DATA);
+
+            // ここでAPIファイルの生成ロジックを実装
+            // 例: コントローラー、ルート、スキーマなどの生成
+
+            // PRの作成
+            await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `API: ${parsed.endpoint}の実装`,
+              body: `Issue #${context.payload.issue.number} の内容に基づいてAPIを生成`,
+              head: `feature/api-${context.payload.issue.number}`,
+              base: 'main'
+            });
+        env:
+          PARSED_DATA: ${{ steps.parse.outputs.parsed }}
