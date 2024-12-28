@@ -3,9 +3,14 @@ import path from 'path';
 
 export const fileLoader = (filePath) => {
   try {
-    const targetPath = path.resolve(process.cwd(), '..', filePath);
+    const targetPath = path.resolve(process.cwd(), filePath);
     console.log('Attempting to read file:', targetPath);
     console.log('Current working directory:', process.cwd());
+
+    if (!fs.existsSync(targetPath)) {
+      throw new Error(`File does not exist at path: ${targetPath}`);
+    }
+
     const content = fs.readFileSync(targetPath, 'utf8');
     if (!content) {
       throw new Error('File content is empty');
@@ -18,6 +23,6 @@ export const fileLoader = (filePath) => {
       error: error.message,
       stack: error.stack
     });
-    throw new Error(`Failed to load file at ${filePath}: ${error.message}`);
+    throw error;
   }
 };

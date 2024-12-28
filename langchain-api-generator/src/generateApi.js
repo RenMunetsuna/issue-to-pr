@@ -27,6 +27,11 @@ const generateApiCode = async ({ anthropicApiKey, issue }) => {
     ]);
 
     const prismaSchema = fileLoader('apps/server/prisma/schema.prisma');
+    console.log(
+      'Loaded prisma schema:',
+      prismaSchema ? 'content exists' : 'content is null or empty'
+    );
+    console.log('prismaSchema type:', typeof prismaSchema);
 
     // プロンプトの作成
     const prompt = createApiGenerationPrompt();
