@@ -55,6 +55,7 @@ Prismaのスキーマを確認して、データベースのカラム名や型�
       'schema',
       'controller',
       'database_services',
+      'prismaSchema',
       'title',
       'content'
     ]
