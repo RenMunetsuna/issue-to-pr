@@ -17,9 +17,6 @@ export const createApiGenerationPrompt = () => {
 # データベースサービスガイドライン
 \${database_services}
 
-# テストガイドライン
-\${testing}
-
 # Issue情報
 タイトル: \${title}
 内容:
