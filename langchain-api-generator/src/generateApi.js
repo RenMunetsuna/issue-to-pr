@@ -1,8 +1,9 @@
 import { ChatAnthropic } from '@langchain/anthropic';
-import { PromptTemplate } from '@langchain/core/prompts';
-import { Octokit } from '@octokit/rest';
-import { readFileSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import { createApiGenerationPrompt } from './prompt/apiGenerationPrompt.js';
+import { PullRequestCreator } from './github/PullRequestCreator.js';
+import { loadAllDocuments } from './utils/documentLoader.js';
+import { printDirectoryStructure } from './utils/directoryPrinter.js';
+import { parseGeneratedCode } from './utils/codeParser.js';
 
 /**
  * API生成を担当するメインクラス
@@ -10,71 +11,15 @@ import { join } from 'path';
  */
 class ApiGenerator {
   constructor(anthropicApiKey, githubToken, workspaceRoot) {
-    // APIキーの状態を確認
-    console.log('Constructor API Key status:', {
-      exists: !!anthropicApiKey,
-      length: anthropicApiKey?.length,
-      prefix: anthropicApiKey?.substring(0, 20),
-      isString: typeof anthropicApiKey === 'string'
-    });
-
-    // Claude 3 Sonnetモデルの初期化
     this.model = new ChatAnthropic({
       anthropicApiKey,
       modelName: 'claude-3-sonnet-20240229'
     });
-    // GitHub APIクライアントの初期化
-    this.octokit = new Octokit({ auth: githubToken });
+    this.prCreator = new PullRequestCreator(githubToken);
     this.workspaceRoot = workspaceRoot;
 
     // ワークスペースの構造を確認
-    console.log('\nWorkspace structure:');
-    this.printDirectoryStructure(this.workspaceRoot);
-  }
-
-  printDirectoryStructure(dir, level = 0) {
-    const files = readdirSync(dir);
-
-    files.forEach((file) => {
-      if (file === 'node_modules' || file === '.git') return;
-
-      const path = join(dir, file);
-      const stats = statSync(path);
-      const prefix = '  '.repeat(level);
-
-      if (stats.isDirectory()) {
-        console.log(`${prefix}📁 ${file}/`);
-        this.printDirectoryStructure(path, level + 1);
-      } else {
-        console.log(`${prefix}📄 ${file}`);
-      }
-    });
-  }
-
-  /**
-   * ドキュメントファイルを読み込む
-   * @param {string} filename - 読み込むファイル名
-   * @returns {string} ファイルの内容
-   */
-  readDocFile(filename) {
-    try {
-      const filePath = join(this.workspaceRoot, 'docs', filename);
-      console.log(`Attempting to read file: ${filePath}`);
-      console.log('Current directory:', process.cwd());
-      console.log('Workspace root:', this.workspaceRoot);
-      console.log(
-        'Directory contents of docs/:',
-        readdirSync(join(this.workspaceRoot, 'docs'))
-      );
-      return readFileSync(filePath, 'utf-8');
-    } catch (error) {
-      console.warn(
-        `Warning: Could not read ${filename}. Error:`,
-        error.message
-      );
-      console.log('Error stack:', error.stack);
-      return '';
-    }
+    printDirectoryStructure(this.workspaceRoot);
   }
 
   /**
@@ -84,22 +29,10 @@ class ApiGenerator {
    */
   async generateApiCode(issue) {
     try {
-      console.log('Reading project documentation...');
-      // APIキーのプレフィックスを確認
-      const apiKeyPrefix = this.model.anthropicApiKey.substring(0, 4);
-      console.log('ANTHROPIC_API_KEY prefix:', apiKeyPrefix);
-
-      const architectureDoc = this.readDocFile('ARCHITECTURE.md');
-      const schemaDoc = this.readDocFile('SCHEMA.md');
-      const controllerDoc = this.readDocFile('CONTROLLER.md');
-      const databaseDoc = this.readDocFile('DATABASE_SERVICES.md');
-      const testingDoc = this.readDocFile('TESTING.md');
-
       if (!issue || typeof issue !== 'object') {
         throw new Error('Invalid issue object');
       }
 
-      console.log('Validating issue content...');
       const { title, content } = issue;
       if (!title || !content) {
         throw new Error(`Invalid issue format. Required fields are missing:
@@ -107,225 +40,30 @@ class ApiGenerator {
           content: ${content ? 'present' : 'missing'}`);
       }
 
-      const issueInfo = {
-        title,
-        endpoint:
-          content.match(/エンドポイント[^\n]*\n+([^\n]+)/)?.[1]?.trim() ||
-          'Not specified',
-        method:
-          content.match(/メソッド[^\n]*\n+([^\n]+)/)?.[1]?.trim() ||
-          'Not specified'
-      };
-      console.log('Parsed issue info:', issueInfo);
+      // ドキュメントの読み込み
+      const docs = loadAllDocuments([
+        'ARCHITECTURE.md',
+        'SCHEMA.md',
+        'CONTROLLER.md',
+        'DATABASE_SERVICES.md',
+        'TESTING.md'
+      ]);
 
-      // プロンプトテンプレートの設定
-      const prompt = new PromptTemplate({
-        template: `あなたはTypeScriptのエキスパートエンジニアです。
-以下のプロジェクトのアーキテクチャとガイドラインに従って、APIエンドポイントを実装してください。
-
-# プロジェクトアーキテクチャ
-\${architecture}
-
-# スキーマガイドライン
-\${schema}
-
-# コントローラーガイドライン
-\${controller}
-
-# データベースサービスガイドライン
-\${database}
-
-# テストガイドライン
-\${testing}
-
-# Issue情報
-タイトル: \${title}
-内容:
-\${content}
-
-以下の要件に従ってください：
-1. コードは TypeScript で記述してください
-2. エラーハンドリングを適切に実装してください
-3. テストコードは Jest を使用してください
-4. コードはクリーンアーキテクチャの原則に従ってください
-5. 必要なインポート文をすべて含めてください
-6. ESLintのルールに従ってください
-7. パフォーマンスを考慮したPrismaクエリを実装してください
-8. 適切なエラーコードとステータスコードを使用してください
-
-出力フォーマット:
-各ファイルは以下の形式で出力してください：
-
-### ファイル名.ts ###
-\`\`\`typescript
-// ファイルの内容
-\`\`\`
-
-注意事項：
-- ファイル名とコードブロックの間に余分な空行や文字を入れないでください
-- 各ファイルの区切りには必ず ### を使用してください
-- コードブロックは必ず \`\`\`typescript で開始し、\`\`\` で終了してください
-- 説明文やコメントは各ファイルのコードブロック内に記述してください
-- ファイル名は拡張子(.ts)を含めて記述してください`,
-        inputVariables: [
-          'architecture',
-          'schema',
-          'controller',
-          'database',
-          'testing',
-          'title',
-          'content'
-        ]
-      });
-
+      // プロンプトテンプレートの設定と実行
+      const prompt = createApiGenerationPrompt();
       const formattedPrompt = await prompt.format({
-        architecture: architectureDoc,
-        schema: schemaDoc,
-        controller: controllerDoc,
-        database: databaseDoc,
-        testing: testingDoc,
+        ...docs,
         title: issue.title,
         content: issue.content
       });
 
       const response = await this.model.invoke(formattedPrompt);
+      const files = parseGeneratedCode(response.content);
 
-      console.log('LLM Response:', response);
-      console.log('LLM Response Content:', response.content);
-
-      console.log('Code generation completed');
-      const files = this.parseGeneratedCode(response.content);
       console.log('Generated files:', Object.keys(files));
-
       return files;
     } catch (error) {
       console.error('Error in generateApiCode:', error);
-      throw error;
-    }
-  }
-
-  parseGeneratedCode(content) {
-    console.log('Parsing generated code...');
-    const files = {};
-
-    // セクションを分割して処理
-    const sections = content
-      .split(/###\s*([^#\n]+)\s*###/)
-      .filter(Boolean)
-      .map((section) => section.trim());
-
-    // セクションを2つずつ処理（ファイル名とコンテンツのペア）
-    for (let i = 0; i < sections.length; i += 2) {
-      const fileName = sections[i].trim();
-      const fileContent = sections[i + 1];
-
-      if (fileName && fileContent) {
-        // コードブロックのマーカーを削除
-        const cleanContent = fileContent
-          .replace(/^```(?:typescript)?\n/, '')
-          .replace(/\n```$/, '')
-          .trim();
-
-        // ファイル名から不要な文字を削除
-        const cleanFileName = fileName
-          .replace(/^```(?:typescript)?\s*/, '')
-          .replace(/\s*```$/, '')
-          .trim();
-
-        files[cleanFileName] = cleanContent;
-        console.log(
-          `Parsed file: ${cleanFileName} (${cleanContent.length} bytes)`
-        );
-      }
-    }
-
-    return files;
-  }
-
-  /**
-   * 生成されたコードをPRとして作成
-   * @param {string} owner - リポジトリオーナー
-   * @param {string} repo - リポジトリ名
-   * @param {number} issueNumber - Issue番号
-   * @param {object} generatedFiles - 生成されたファイル群
-   */
-  async createPullRequest(owner, repo, issueNumber, generatedFiles) {
-    try {
-      // Get issue title
-      console.log('Getting issue title...');
-      const { data: issue } = await this.octokit.issues.get({
-        owner,
-        repo,
-        issue_number: issueNumber
-      });
-      const issueTitle = issue.title;
-      const timestamp = Date.now().toString().slice(-6);
-
-      // Create branch name with timestamp
-      const branchName = `feature/${issueNumber}-${timestamp}`;
-      const defaultBranch = 'main';
-
-      // Get the SHA of the default branch
-      console.log('Getting default branch SHA...');
-      const { data: defaultBranchData } = await this.octokit.repos.getBranch({
-        owner,
-        repo,
-        branch: defaultBranch
-      });
-      const baseSha = defaultBranchData.commit.sha;
-
-      // Create a new branch
-      console.log(`Creating branch: ${branchName}`);
-      await this.octokit.git.createRef({
-        owner,
-        repo,
-        ref: `refs/heads/${branchName}`,
-        sha: baseSha
-      });
-
-      // Create commits for each file
-      console.log('Creating commits...');
-      for (const [fileName, content] of Object.entries(generatedFiles)) {
-        if (!content || content.trim() === '') {
-          console.warn(`Skipping empty file: ${fileName}`);
-          continue;
-        }
-
-        // ファイルパスを構築
-        const filePath = `apps/server/src/routes/app/users/${fileName}`;
-        console.log(`Creating commit for file: ${filePath}`);
-
-        try {
-          await this.octokit.repos.createOrUpdateFileContents({
-            owner,
-            repo,
-            path: filePath,
-            message: `feat: Add ${fileName}`,
-            content: Buffer.from(content).toString('base64'),
-            branch: branchName
-          });
-          console.log(`Successfully created/updated file: ${filePath}`);
-        } catch (error) {
-          console.error(`Error creating/updating file ${filePath}:`, error);
-          throw error;
-        }
-      }
-
-      // Create pull request
-      console.log('Creating pull request...');
-      const { data: pr } = await this.octokit.pulls.create({
-        owner,
-        repo,
-        title: `${issueTitle} (#${issueNumber}-${timestamp})`,
-        body: `Closes #${issueNumber}`,
-        head: branchName,
-        base: defaultBranch
-      });
-
-      console.log('Pull request created:', pr.html_url);
-      return pr;
-    } catch (error) {
-      console.error('Error in createPullRequest:', error);
       throw error;
     }
   }
@@ -334,8 +72,6 @@ class ApiGenerator {
 // GitHub Actions から呼び出されるメイン関数
 export async function main() {
   try {
-    console.log('Starting main function...');
-
     const {
       ANTHROPIC_API_KEY,
       GITHUB_TOKEN,
@@ -345,15 +81,7 @@ export async function main() {
       ISSUE_CONTENT
     } = process.env;
 
-    // APIキーのデバッグ情報を追���
-    console.log('API Key status:', {
-      exists: !!ANTHROPIC_API_KEY,
-      length: ANTHROPIC_API_KEY?.length,
-      prefix: ANTHROPIC_API_KEY?.substring(0, 20),
-      isString: typeof ANTHROPIC_API_KEY === 'string'
-    });
-
-    console.log('Validating environment variables...');
+    // 必須環境変数の確認
     const missingVars = [];
     if (!ANTHROPIC_API_KEY) missingVars.push('ANTHROPIC_API_KEY');
     if (!GITHUB_TOKEN) missingVars.push('GITHUB_TOKEN');
@@ -368,18 +96,13 @@ export async function main() {
       );
     }
 
-    console.log('Parsing issue content...');
+    // Issueの内容をパース
     let issue;
     try {
-      console.log('Raw ISSUE_CONTENT:', ISSUE_CONTENT);
-      // ISSUECONTENTが二重にJSON文字列化されている可能性があるため、必要に応じて2回パースする
       let parsedContent;
       try {
-        // 最初のパース
         parsedContent = JSON.parse(ISSUE_CONTENT);
-        // 文字列として渡された場合は2回目のパースを試みる
         if (typeof parsedContent === 'string') {
-          console.log('Content is still a string, attempting second parse');
           parsedContent = JSON.parse(parsedContent);
         }
       } catch (parseError) {
@@ -387,9 +110,7 @@ export async function main() {
       }
 
       issue = parsedContent;
-      console.log('Parsed issue:', JSON.stringify(issue, null, 2));
 
-      // イシューの内容を検証
       if (!issue || typeof issue !== 'object') {
         throw new Error('Invalid issue format: not an object');
       }
@@ -401,42 +122,26 @@ export async function main() {
       if (!issue.content || typeof issue.content !== 'string') {
         throw new Error('Invalid issue format: missing or invalid content');
       }
-
-      // イシューの内容をログ出力
-      console.log('Issue validation passed:', {
-        title: issue.title,
-        contentLength: issue.content.length,
-        hasMethod: issue.content.includes('メソッド'),
-        hasEndpoint: issue.content.includes('エンドポイント')
-      });
     } catch (error) {
-      console.error('Parse error details:', {
-        error: error.message,
-        content: ISSUE_CONTENT,
-        typeof_content: typeof ISSUE_CONTENT
-      });
       throw new Error(
-        `Failed to parse or validate ISSUE_CONTENT: ${error.message}\nContent: ${ISSUE_CONTENT}`
+        `Failed to parse or validate ISSUE_CONTENT: ${error.message}`
       );
     }
 
-    console.log('Initializing API generator...');
+    // API生成の実行
     const generator = new ApiGenerator(
       ANTHROPIC_API_KEY,
       GITHUB_TOKEN,
       process.cwd()
     );
-    console.log('ApiGenerator initialized');
 
-    console.log('Generating API code...');
     const generatedFiles = await generator.generateApiCode(issue);
     if (!generatedFiles || Object.keys(generatedFiles).length === 0) {
       throw new Error('No files were generated');
     }
-    console.log('Generated files:', Object.keys(generatedFiles));
 
-    console.log('Creating pull request...');
-    await generator.createPullRequest(
+    // PRの作成
+    await generator.prCreator.createPullRequest(
       REPO_OWNER,
       REPO_NAME,
       ISSUE_NUMBER,
@@ -444,15 +149,12 @@ export async function main() {
     );
     console.log('Pull request created successfully');
   } catch (error) {
-    console.error('Error in main function:', error);
-    if (error.stack) {
-      console.error('Stack trace:', error.stack);
-    }
+    console.error('Error:', error.message);
     process.exit(1);
   }
 }
 
 main().catch((error) => {
-  console.error('Unhandled error:', error);
+  console.error('Unhandled error:', error.message);
   process.exit(1);
 });
