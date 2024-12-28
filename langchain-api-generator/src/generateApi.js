@@ -18,6 +18,30 @@ class ApiGenerator {
     // GitHub APIクライアントの初期化
     this.octokit = new Octokit({ auth: githubToken });
     this.workspaceRoot = workspaceRoot;
+
+    // ワークスペースの構造を確認
+    console.log('\nWorkspace structure:');
+    this.printDirectoryStructure(this.workspaceRoot);
+  }
+
+  printDirectoryStructure(dir, level = 0) {
+    const fs = require('fs');
+    const files = fs.readdirSync(dir);
+
+    files.forEach((file) => {
+      if (file === 'node_modules' || file === '.git') return;
+
+      const path = join(dir, file);
+      const stats = fs.statSync(path);
+      const prefix = '  '.repeat(level);
+
+      if (stats.isDirectory()) {
+        console.log(`${prefix}📁 ${file}/`);
+        this.printDirectoryStructure(path, level + 1);
+      } else {
+        console.log(`${prefix}📄 ${file}`);
+      }
+    });
   }
 
   /**
@@ -27,9 +51,21 @@ class ApiGenerator {
    */
   readDocFile(filename) {
     try {
-      return readFileSync(join(this.workspaceRoot, 'docs', filename), 'utf-8');
+      const filePath = join(this.workspaceRoot, 'docs', filename);
+      console.log(`Attempting to read file: ${filePath}`);
+      console.log('Current directory:', process.cwd());
+      console.log('Workspace root:', this.workspaceRoot);
+      console.log(
+        'Directory contents of docs/:',
+        require('fs').readdirSync(join(this.workspaceRoot, 'docs'))
+      );
+      return readFileSync(filePath, 'utf-8');
     } catch (error) {
-      console.warn(`Warning: Could not read ${filename}`);
+      console.warn(
+        `Warning: Could not read ${filename}. Error:`,
+        error.message
+      );
+      console.log('Error stack:', error.stack);
       return '';
     }
   }
@@ -413,10 +449,33 @@ export async function main() {
     console.log('Parsing issue content...');
     let issue;
     try {
+      console.log('Raw ISSUE_CONTENT:', ISSUE_CONTENT);
       issue = JSON.parse(ISSUE_CONTENT);
+      console.log('Parsed issue:', JSON.stringify(issue, null, 2));
+
+      // イシューの内容を検証
+      if (!issue || typeof issue !== 'object') {
+        throw new Error('Invalid issue format: not an object');
+      }
+
+      if (!issue.title || typeof issue.title !== 'string') {
+        throw new Error('Invalid issue format: missing or invalid title');
+      }
+
+      if (!issue.content || typeof issue.content !== 'string') {
+        throw new Error('Invalid issue format: missing or invalid content');
+      }
+
+      // イシューの内容をログ出力
+      console.log('Issue validation passed:', {
+        title: issue.title,
+        contentLength: issue.content.length,
+        hasMethod: issue.content.includes('メソッド'),
+        hasEndpoint: issue.content.includes('エンドポイント')
+      });
     } catch (error) {
       throw new Error(
-        `Failed to parse ISSUE_CONTENT: ${error.message}\nContent: ${ISSUE_CONTENT}`
+        `Failed to parse or validate ISSUE_CONTENT: ${error.message}\nContent: ${ISSUE_CONTENT}`
       );
     }
 
