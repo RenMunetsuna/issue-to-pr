@@ -12,7 +12,7 @@ assignees: ''
 
 ### エンドポイント
 
-<!-- 例: auth/user/:id/news -->
+<!-- 例: auth/user/:id -->
 
 -
 
