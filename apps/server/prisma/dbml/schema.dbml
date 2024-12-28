@@ -1,0 +1,154 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table users {
+  id String [pk]
+  email String [unique, not null]
+  name String [not null]
+  role Role [not null, default: 'USER']
+  posts posts [not null]
+  comments comments [not null]
+  profile profiles
+  likes likes [not null]
+  notifications notifications [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table profiles {
+  id String [pk]
+  bio String
+  avatar String
+  birthDate DateTime
+  location String
+  user users [not null]
+  userId String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table posts {
+  id String [pk]
+  title String [not null]
+  content String [not null]
+  published Boolean [not null, default: false]
+  author users [not null]
+  authorId String [not null]
+  category categories [not null]
+  categoryId String [not null]
+  tags tags [not null]
+  comments comments [not null]
+  likes likes [not null]
+  media media [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table comments {
+  id String [pk]
+  content String [not null]
+  post posts [not null]
+  postId String [not null]
+  author users [not null]
+  authorId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table categories {
+  id String [pk]
+  name String [unique, not null]
+  description String
+  posts posts [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table tags {
+  id String [pk]
+  name String [unique, not null]
+  posts posts [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table likes {
+  id String [pk]
+  user users [not null]
+  userId String [not null]
+  post posts [not null]
+  postId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (userId, postId) [unique]
+  }
+}
+
+Table media {
+  id String [pk]
+  type MediaType [not null]
+  url String [not null]
+  filename String [not null]
+  size Int [not null]
+  mimeType String [not null]
+  post posts [not null]
+  postId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table notifications {
+  id String [pk]
+  type NotificationType [not null]
+  title String [not null]
+  content String [not null]
+  isRead Boolean [not null, default: false]
+  user users [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table PostToTag {
+  tagsId String [ref: > tags.id]
+  postsId String [ref: > posts.id]
+}
+
+Enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+}
+
+Enum NotificationType {
+  COMMENT
+  LIKE
+  MENTION
+  SYSTEM
+}
+
+Enum Role {
+  USER
+  ADMIN
+}
+
+Ref: profiles.userId - users.id [delete: Cascade]
+
+Ref: posts.authorId > users.id [delete: Cascade]
+
+Ref: posts.categoryId > categories.id [delete: Restrict]
+
+Ref: comments.postId > posts.id [delete: Cascade]
+
+Ref: comments.authorId > users.id [delete: Cascade]
+
+Ref: likes.userId > users.id [delete: Cascade]
+
+Ref: likes.postId > posts.id [delete: Cascade]
+
+Ref: media.postId > posts.id [delete: Cascade]
+
+Ref: notifications.userId > users.id [delete: Cascade]

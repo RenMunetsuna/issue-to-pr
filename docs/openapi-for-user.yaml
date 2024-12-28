@@ -1,0 +1,1493 @@
+openapi: 3.0.0
+info:
+  title: aeon pet swagger
+  description: aeon pet swagger
+  version: 1.0.0
+components:
+  schemas: {}
+paths:
+  /:
+    get:
+      tags:
+        - user
+        - admin
+      description: ヘルスチェック用API
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+  /app/addresses/:
+    get:
+      tags:
+        - user
+      description: 郵便番号から住所を取得
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: postal_code
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prefecture:
+                    type: string
+                  locality:
+                    type: string
+                  subLocality:
+                    type: string
+                required:
+                  - prefecture
+                  - locality
+                  - subLocality
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '404':
+          description: 該当する住所が見つかりません
+          content:
+            application/json:
+              schema:
+                description: 該当する住所が見つかりません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                  errorSubCode:
+                    type: number
+                  errorSubMessage:
+                    type: string
+                    enum:
+                      - Geocoding API Error
+                required:
+                  - error
+  /app/auth/connect/:
+    post:
+      tags:
+        - user
+      description: WAONカードの連携
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                waonCardNumber:
+                  type: string
+                birthDate:
+                  type: string
+              required:
+                - waonCardNumber
+                - birthDate
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  waonCardNumber:
+                    type: string
+                required:
+                  - userId
+                  - waonCardNumber
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '422':
+          description: 会員番号または生年月日が正しくありません
+          content:
+            application/json:
+              schema:
+                description: 会員番号または生年月日が正しくありません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                  errorSubCode:
+                    type: number
+                  errorSubMessage:
+                    type: string
+                    enum:
+                      - FITSHOP API Error
+                required:
+                  - error
+  /app/auth/verify/:
+    post:
+      tags:
+        - user
+      description: ユーザーが本会員であるか確認するAPI
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                waonCardNumber:
+                  type: string
+              required:
+                - waonCardNumber
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userStatus:
+                    type: string
+                    enum:
+                      - LINK_REGULAR
+                      - LINK_PENDING
+                  userId:
+                    type: string
+                required:
+                  - userStatus
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '409':
+          description: 連携に失敗しました
+          content:
+            application/json:
+              schema:
+                description: 連携に失敗しました
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '422':
+          description: 会員番号が正しくありません
+          content:
+            application/json:
+              schema:
+                description: 会員番号が正しくありません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                  errorSubCode:
+                    type: number
+                  errorSubMessage:
+                    type: string
+                    enum:
+                      - FITSHOP API Error
+                required:
+                  - error
+  /app/auth/verify/registered/:
+    post:
+      tags:
+        - user
+      description: ユーザーの存在確認API
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: string
+              required:
+                - deviceId
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userStatus:
+                    type: string
+                    nullable: true
+                    enum:
+                      - LINK_REGULAR
+                      - REGIST_REGULAR
+                      - LINK_PENDING
+                      - REGIST_GUEST
+                  userId:
+                    type: string
+                    nullable: true
+                required:
+                  - userStatus
+                  - userId
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+  /app/users/{userId}/:
+    get:
+      tags:
+        - user
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  waonCardNumber:
+                    type: string
+                  email:
+                    type: string
+                    nullable: true
+                  currentStatus:
+                    type: string
+                  isReceivePushNotification:
+                    type: boolean
+                required:
+                  - id
+                  - waonCardNumber
+                  - email
+                  - currentStatus
+                  - isReceivePushNotification
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '401':
+          description: トークンが無効です
+          content:
+            application/json:
+              schema:
+                description: トークンが無効です
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - トークンが無効です
+                      - デバイスが指定されてません
+                      - ユーザーとデバイスとの整合性を確認できません
+                      - ユーザーIDが不正です
+                required:
+                  - error
+        '404':
+          description: ユーザーが見つかりません
+          content:
+            application/json:
+              schema:
+                description: ユーザーが見つかりません
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - ユーザーが見つかりません
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+    post:
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surName:
+                  type: string
+                firstName:
+                  type: string
+                surNameKana:
+                  type: string
+                firstNameKana:
+                  type: string
+                birthYear:
+                  type: string
+                birthMonth:
+                  type: string
+                birthDay:
+                  type: string
+                sex:
+                  type: string
+                  enum:
+                    - MAN
+                    - WOMAN
+                    - NO_ANSWER
+                homePostalNo:
+                  type: string
+                homeAddress1:
+                  type: string
+                homeAddress2:
+                  type: string
+                homeAddress3:
+                  type: string
+                regularStoreList:
+                  type: array
+                  items:
+                    type: string
+                mailAddress:
+                  type: string
+                isReceiveMailMagazine:
+                  type: boolean
+              required:
+                - surName
+                - firstName
+                - surNameKana
+                - firstNameKana
+                - birthYear
+                - birthMonth
+                - birthDay
+                - sex
+                - homePostalNo
+                - homeAddress1
+                - homeAddress2
+                - homeAddress3
+                - regularStoreList
+                - mailAddress
+                - isReceiveMailMagazine
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '401':
+          description: トークンが無効です
+          content:
+            application/json:
+              schema:
+                description: トークンが無効です
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - トークンが無効です
+                      - デバイスが指定されてません
+                      - ユーザーとデバイスとの整合性を確認できません
+                      - ユーザーIDが不正です
+                required:
+                  - error
+        '404':
+          description: ユーザーが見つかりません
+          content:
+            application/json:
+              schema:
+                description: ユーザーが見つかりません
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - ユーザーが見つかりません
+                required:
+                  - error
+        '422':
+          description: 既に会員登録済みです
+          content:
+            application/json:
+              schema:
+                description: 既に会員登録済みです
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - 既に会員登録済みです
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                  errorSubCode:
+                    type: number
+                  errorSubMessage:
+                    type: string
+                    enum:
+                      - FITSHOP API Error
+                required:
+                  - error
+  /app/users/{userId}/missions/:
+    get:
+      tags:
+        - user
+      description: ミッション一覧取得用API
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  missions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        completedPoint:
+                          type: number
+                        missionNumber:
+                          type: number
+                        isCompleted:
+                          type: boolean
+                      required:
+                        - id
+                        - title
+                        - completedPoint
+                        - missionNumber
+                        - isCompleted
+                  userStatus:
+                    type: string
+                    enum:
+                      - LINK_REGULAR
+                      - REGIST_REGULAR
+                      - LINK_PENDING
+                      - REGIST_GUEST
+                required:
+                  - missions
+                  - userStatus
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '401':
+          description: ユーザーIDが不正です
+          content:
+            application/json:
+              schema:
+                description: ユーザーIDが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - トークンが無効です
+                      - デバイスが指定されてません
+                      - ユーザーとデバイスとの整合性を確認できません
+                      - ユーザーIDが不正です
+                required:
+                  - error
+        '404':
+          description: ユーザーが見つかりません
+          content:
+            application/json:
+              schema:
+                description: ユーザーが見つかりません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+  /app/users/{userId}/news/:
+    get:
+      tags:
+        - user
+      description: お知らせ一覧取得API
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  news:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        linkTarget:
+                          type: string
+                          enum:
+                            - NEWS_DETAIL
+                            - COUPON_LIST
+                            - SURVEY_DETAIL
+                            - EXTERNAL_LINK
+                        url:
+                          type: string
+                          nullable: true
+                        distributedAt:
+                          type: string
+                      required:
+                        - id
+                        - title
+                        - linkTarget
+                        - url
+                        - distributedAt
+                required:
+                  - news
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '404':
+          description: ユーザーが見つかりません
+          content:
+            application/json:
+              schema:
+                description: ユーザーが見つかりません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+  /app/users/{userId}/points/:
+    get:
+      tags:
+        - user
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currentPoint:
+                    type: number
+                  expiringPoints:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        expirationDate:
+                          type: string
+                        expirePoint:
+                          type: number
+                      required:
+                        - expirationDate
+                        - expirePoint
+                  pointTransactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        storeName:
+                          type: string
+                        storeCd:
+                          type: string
+                        transactionDate:
+                          type: string
+                        point:
+                          type: number
+                        dealDiv:
+                          type: string
+                        pointAccrualDiv:
+                          type: string
+                      required:
+                        - storeName
+                        - storeCd
+                        - transactionDate
+                        - point
+                        - dealDiv
+                        - pointAccrualDiv
+                required:
+                  - currentPoint
+                  - expiringPoints
+                  - pointTransactions
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '404':
+          description: ユーザーが見つかりません
+          content:
+            application/json:
+              schema:
+                description: ユーザーが見つかりません
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - ユーザーが見つかりません
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                  errorSubCode:
+                    type: number
+                  errorSubMessage:
+                    type: string
+                    enum:
+                      - FITSHOP API Error
+                required:
+                  - error
+    post:
+      tags:
+        - user
+      description: 来店ポイント付与API
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: cdpUserId
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: token
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addPoint:
+                    type: number
+                  pointBalance:
+                    type: number
+                  isCompletedVisitShopMission:
+                    type: boolean
+                required:
+                  - pointBalance
+                  - isCompletedVisitShopMission
+        '400':
+          description: リクエスト値が不正です
+          content:
+            application/json:
+              schema:
+                description: リクエスト値が不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '404':
+          description: ユーザーまたは店舗またはトークンが存在しません
+          content:
+            application/json:
+              schema:
+                description: ユーザーまたは店舗またはトークンが存在しません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '409':
+          description: 既に本日来店ポイントを受け取っています
+          content:
+            application/json:
+              schema:
+                description: 既に本日来店ポイントを受け取っています
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+  /app/users/{userId}/points/transactions/:
+    get:
+      tags:
+        - user
+      description: 来店ポイント付与API
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pointTransactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        storeName:
+                          type: string
+                        storeCd:
+                          type: string
+                        transactionDate:
+                          type: string
+                        point:
+                          type: number
+                        dealDiv:
+                          type: string
+                        pointAccrualDiv:
+                          type: string
+                      required:
+                        - storeName
+                        - storeCd
+                        - transactionDate
+                        - point
+                        - dealDiv
+                        - pointAccrualDiv
+                required:
+                  - pointTransactions
+        '400':
+          description: リクエスト値が不正です
+          content:
+            application/json:
+              schema:
+                description: リクエスト値が不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '404':
+          description: ユーザーが存在しません
+          content:
+            application/json:
+              schema:
+                description: ユーザーが存在しません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                  errorSubCode:
+                    type: number
+                  errorSubMessage:
+                    type: string
+                    enum:
+                      - FITSHOP API Error
+                required:
+                  - error
+  /app/users/{userId}/surveys/:
+    get:
+      tags:
+        - user
+      description: アンケート一覧取得用API
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  surveys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        url:
+                          type: string
+                        endDate:
+                          type: number
+                        completedPoint:
+                          type: number
+                      required:
+                        - id
+                        - title
+                        - url
+                        - endDate
+                        - completedPoint
+                required:
+                  - surveys
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+  /app/users/{userId}/surveys/{surveyId}/answer/:
+    post:
+      tags:
+        - user
+      description: アンケート回答API
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: userId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: surveyId
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  completedPoint:
+                    type: number
+                required:
+                  - completedPoint
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '401':
+          description: トークンが無効です
+          content:
+            application/json:
+              schema:
+                description: トークンが無効です
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - トークンが無効です
+                      - デバイスが指定されてません
+                      - ユーザーとデバイスとの整合性を確認できません
+                      - ユーザーIDが不正です
+                required:
+                  - error
+        '404':
+          description: ユーザーまたはアンケートが存在しません
+          content:
+            application/json:
+              schema:
+                description: ユーザーまたはアンケートが存在しません
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '409':
+          description: 既に回答済みのアンケートです
+          content:
+            application/json:
+              schema:
+                description: 既に回答済みのアンケートです
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '410':
+          description: 既に配信終了しているアンケートです
+          content:
+            application/json:
+              schema:
+                description: 既に配信終了しているアンケートです
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+  /app/users/devices/:
+    post:
+      tags:
+        - user
+      description: デバイス登録用API
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: string
+                expoPushToken:
+                  type: string
+              required:
+                - deviceId
+                - expoPushToken
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '401':
+          description: トークンが無効です
+          content:
+            application/json:
+              schema:
+                description: トークンが無効です
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - トークンが無効です
+                      - デバイスが指定されてません
+                      - ユーザーとデバイスとの整合性を確認できません
+                      - ユーザーIDが不正です
+                required:
+                  - error
+        '500':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                required:
+                  - error
+  /app/users/guest/:
+    post:
+      tags:
+        - user
+      description: ゲストユーザー作成API
+      parameters:
+        - schema:
+            type: string
+          in: header
+          name: authorization
+          required: false
+        - schema:
+            type: string
+          in: header
+          name: x-device-id
+          required: false
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  waonCardNumber:
+                    type: string
+                required:
+                  - userId
+                  - waonCardNumber
+        '400':
+          description: リクエストが不正です
+          content:
+            application/json:
+              schema:
+                description: リクエストが不正です
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                description: サーバーエラー
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - Internal Server Error
+                  errorSubCode:
+                    type: number
+                  errorSubMessage:
+                    type: string
+                    enum:
+                      - FITSHOP API Error
+                required:
+                  - error

@@ -1,0 +1,172 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+generator erd {
+  provider = "prisma-dbml-generator"
+  output   = "./dbml"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique @db.VarChar(255)
+  name      String    @db.VarChar(100)
+  role      Role      @default(USER)
+  posts     Post[]
+  comments  Comment[]
+  profile   Profile?
+  likes     Like[]
+  notifications Notification[]
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Profile {
+  id          String    @id @default(cuid())
+  bio         String?   @db.Text
+  avatar      String?   @db.VarChar(255)
+  birthDate   DateTime? @db.Date
+  location    String?   @db.VarChar(100)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String    @unique
+  createdAt   DateTime @default(now()) @db.Timestamp()
+  updatedAt   DateTime @updatedAt @db.Timestamp()
+
+  @@map("profiles")
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  title       String    @db.VarChar(200)
+  content     String    @db.Text
+  published   Boolean   @default(false)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  categoryId  String
+  tags        Tag[]
+  comments    Comment[]
+  likes       Like[]
+  media       Media[]
+  createdAt   DateTime  @default(now()) @db.Timestamp()
+  updatedAt   DateTime  @updatedAt @db.Timestamp()
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String    @db.Text
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @updatedAt @db.Timestamp()
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique @db.VarChar(50)
+  description String?  @db.Text
+  posts       Post[]
+  createdAt   DateTime @default(now()) @db.Timestamp()
+  updatedAt   DateTime @updatedAt @db.Timestamp()
+
+  @@index([createdAt])
+  @@map("categories")
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique @db.VarChar(30)
+  posts     Post[]
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @updatedAt @db.Timestamp()
+
+  @@index([createdAt])
+  @@map("tags")
+}
+
+model Like {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  createdAt DateTime @default(now()) @db.Timestamp()
+
+  @@unique([userId, postId])
+  @@index([createdAt])
+  @@map("likes")
+}
+
+model Media {
+  id          String    @id @default(cuid())
+  type        MediaType
+  url         String    @db.VarChar(255)
+  filename    String    @db.VarChar(255)
+  size        Int
+  mimeType    String    @db.VarChar(100)
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
+  createdAt   DateTime @default(now()) @db.Timestamp()
+  updatedAt   DateTime @updatedAt @db.Timestamp()
+
+  @@index([postId])
+  @@index([createdAt])
+  @@map("media")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType
+  title       String           @db.VarChar(200)
+  content     String           @db.Text
+  isRead      Boolean          @default(false)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  createdAt   DateTime         @default(now()) @db.Timestamp()
+  updatedAt   DateTime         @updatedAt @db.Timestamp()
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+}
+
+enum NotificationType {
+  COMMENT
+  LIKE
+  MENTION
+  SYSTEM
+}
+
+enum Role {
+  USER
+  ADMIN
+}

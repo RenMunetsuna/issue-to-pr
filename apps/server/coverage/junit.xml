@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="6" failures="0" errors="0" time="0.998">
+  <testsuite name="getUserFromDB" errors="0" failures="0" skipped="0" timestamp="2024-12-28T13:48:25" time="0.882" tests="4">
+    <testcase classname="getUserFromDB 正常系 - ユーザー情報取得" name="getUserFromDB 正常系 - ユーザー情報取得" time="0.003">
+    </testcase>
+    <testcase classname="getUserFromDB 正常系 - プロフィールが存在しないユーザー" name="getUserFromDB 正常系 - プロフィールが存在しないユーザー" time="0">
+    </testcase>
+    <testcase classname="getUserFromDB 異常系 - ユーザーが存在しない" name="getUserFromDB 異常系 - ユーザーが存在しない" time="0">
+    </testcase>
+    <testcase classname="getUserFromDB 異常系 - DBエラー" name="getUserFromDB 異常系 - DBエラー" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="extractParamsForGetUser" errors="0" failures="0" skipped="0" timestamp="2024-12-28T13:48:26" time="0.071" tests="2">
+    <testcase classname="extractParamsForGetUser 正常系 - 有効なユーザーID" name="extractParamsForGetUser 正常系 - 有効なユーザーID" time="0.001">
+    </testcase>
+    <testcase classname="extractParamsForGetUser 異常系 - 不正なユーザーID形式" name="extractParamsForGetUser 異常系 - 不正なユーザーID形式" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>
