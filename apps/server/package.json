@@ -20,6 +20,9 @@
     "@fastify/helmet": "^11.1.1",
     "@fastify/swagger": "^8.14.0",
     "@fastify/swagger-ui": "^3.0.0",
+    "@langchain/anthropic": "^0.3.11",
+    "@langchain/core": "^0.3.26",
+    "@langchain/openai": "^0.3.16",
     "@prisma/client": "5.13.0",
     "aws-jwt-verify": "^4.0.1",
     "aws-sdk-client-mock": "^4.0.1",
@@ -29,7 +32,8 @@
     "json-schema-to-ts": "^3.0.1",
     "ramda": "^0.30.0",
     "ts-essentials": "^9.4.2",
-    "ts-pattern": "^5.1.1"
+    "ts-pattern": "^5.1.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@softwaretechnik/dbml-renderer": "^1.0.30",

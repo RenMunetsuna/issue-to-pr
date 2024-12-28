@@ -6,10 +6,6 @@ labels: 'api-generate'
 assignees: ''
 ---
 
-### メソッド
-
-<!-- GET, POST, PUT, DELETE, PATCH -->
-
 ### エンドポイント
 
 <!-- 例: auth/user/:id -->
