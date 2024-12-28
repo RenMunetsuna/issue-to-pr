@@ -54,8 +54,6 @@ jobs:
           script: |
             const issueBody = context.payload.issue.body;
             const issueTitle = context.payload.issue.title;
-            console.log('Issue Title:', issueTitle);
-            console.log('Issue Body:', issueBody);
 
             const parsed = {
               title: issueTitle,
@@ -63,7 +61,6 @@ jobs:
               number: context.payload.issue.number,
               labels: context.payload.issue.labels.map(label => label.name)
             };
-            console.log('Parsed Content:', JSON.stringify(parsed, null, 2));
             return JSON.stringify(parsed);
 
       - name: Generate API code
@@ -71,11 +68,6 @@ jobs:
         run: |
           cd langchain-api-generator
           echo "Starting API generation..."
-          echo "Issue content: $ISSUE_CONTENT"
-          echo "Current directory: $(pwd)"
-          echo "ANTHROPIC_API_KEY prefix: ${ANTHROPIC_API_KEY:0:4}"
-          echo "Directory contents:"
-          ls -la
           echo "Running generate script..."
           DEBUG=langchain pnpm generate || {
             echo "Generation failed with exit code $?"
