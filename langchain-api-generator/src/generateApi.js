@@ -1,7 +1,7 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { Octokit } from '@octokit/rest';
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
 /**
@@ -25,14 +25,13 @@ class ApiGenerator {
   }
 
   printDirectoryStructure(dir, level = 0) {
-    const fs = require('fs');
-    const files = fs.readdirSync(dir);
+    const files = readdirSync(dir);
 
     files.forEach((file) => {
       if (file === 'node_modules' || file === '.git') return;
 
       const path = join(dir, file);
-      const stats = fs.statSync(path);
+      const stats = statSync(path);
       const prefix = '  '.repeat(level);
 
       if (stats.isDirectory()) {
@@ -57,7 +56,7 @@ class ApiGenerator {
       console.log('Workspace root:', this.workspaceRoot);
       console.log(
         'Directory contents of docs/:',
-        require('fs').readdirSync(join(this.workspaceRoot, 'docs'))
+        readdirSync(join(this.workspaceRoot, 'docs'))
       );
       return readFileSync(filePath, 'utf-8');
     } catch (error) {
