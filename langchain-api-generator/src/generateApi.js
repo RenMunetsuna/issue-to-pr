@@ -193,18 +193,31 @@ class ApiGenerator {
 
   parseGeneratedCode(content) {
     console.log('Parsing generated code...');
-    const sections = content.split('###').filter(Boolean);
+    // ### で区切られたセクションを分割
+    const sections = content
+      .split(/###\s*([^#]+?)\s*###/)
+      .filter(Boolean)
+      .map((section) => section.trim());
+
     const files = {};
 
-    sections.forEach((section) => {
-      const titleMatch = section.match(/^\s*([\w/.]+\.ts)\s*$/m);
-      if (titleMatch) {
-        const fileName = titleMatch[1];
-        const content = section.replace(/^\s*([\w/.]+\.ts)\s*$/m, '').trim();
-        files[fileName] = content;
-        console.log(`Parsed file: ${fileName} (${content.length} bytes)`);
+    // セクションを2つずつ処理（ファイル名とコンテンツのペア）
+    for (let i = 0; i < sections.length; i += 2) {
+      const fileName = sections[i].trim();
+      const fileContent = sections[i + 1];
+
+      if (fileName && fileContent) {
+        // コードブロックのマーカーを削除
+        const cleanContent = fileContent
+          .replace(/^```typescript\n/, '')
+          .replace(/^```\n/, '')
+          .replace(/```$/, '')
+          .trim();
+
+        files[fileName] = cleanContent;
+        console.log(`Parsed file: ${fileName} (${cleanContent.length} bytes)`);
       }
-    });
+    }
 
     return files;
   }
@@ -244,15 +257,26 @@ class ApiGenerator {
       // Create commits for each file
       console.log('Creating commits...');
       for (const [path, content] of Object.entries(generatedFiles)) {
+        if (!content || content.trim() === '') {
+          console.warn(`Skipping empty file: ${path}`);
+          continue;
+        }
+
         console.log(`Creating commit for file: ${path}`);
-        await this.octokit.repos.createOrUpdateFileContents({
-          owner,
-          repo,
-          path,
-          message: `feat: Add ${path}`,
-          content: Buffer.from(content).toString('base64'),
-          branch: branchName
-        });
+        try {
+          await this.octokit.repos.createOrUpdateFileContents({
+            owner,
+            repo,
+            path: `apps/server/src/routes/app/users/${path}`,
+            message: `feat: Add ${path}`,
+            content: Buffer.from(content).toString('base64'),
+            branch: branchName
+          });
+          console.log(`Successfully created/updated file: ${path}`);
+        } catch (error) {
+          console.error(`Error creating/updating file ${path}:`, error);
+          throw error;
+        }
       }
 
       // Create pull request
