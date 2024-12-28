@@ -150,7 +150,7 @@ class ApiGenerator {
 4. コードはクリーンアーキテクチャの原則に従ってください
 5. 必要なインポート文をすべて含めてください
 6. ESLintのルールに従ってください
-7. パフォーマンスを考慮したPrismaクエリを実装してください
+7. パフォーマンスを考慮したPrismaクエリを実装してくだ���い
 8. 適切なエラーコードとステータスコードを使用してください
 
 以下のファイルを生成してください。各ファイルは ### ファイル名 ### で区切って出力してください。`,
@@ -231,8 +231,18 @@ class ApiGenerator {
    */
   async createPullRequest(owner, repo, issueNumber, generatedFiles) {
     try {
-      console.log('Creating branch...');
-      const branchName = `api-generate-${issueNumber}`;
+      // Get issue title
+      console.log('Getting issue title...');
+      const { data: issue } = await this.octokit.issues.get({
+        owner,
+        repo,
+        issue_number: issueNumber
+      });
+      const issueTitle = issue.title;
+      const timestamp = Date.now().toString().slice(-6);
+
+      // Create branch name with timestamp
+      const branchName = `feature/${issueNumber}-${timestamp}`;
       const defaultBranch = 'main';
 
       // Get the SHA of the default branch
@@ -243,7 +253,6 @@ class ApiGenerator {
         branch: defaultBranch
       });
       const baseSha = defaultBranchData.commit.sha;
-      console.log('Default branch SHA:', baseSha);
 
       // Create a new branch
       console.log(`Creating branch: ${branchName}`);
@@ -279,12 +288,12 @@ class ApiGenerator {
         }
       }
 
-      // Create pull request
+      // Create pull request with issue title and timestamp
       console.log('Creating pull request...');
       const { data: pr } = await this.octokit.pulls.create({
         owner,
         repo,
-        title: `API Generation #${issueNumber}`,
+        title: `${issueTitle} (#${issueNumber}-${timestamp})`,
         body: `Closes #${issueNumber}`,
         head: branchName,
         base: defaultBranch
