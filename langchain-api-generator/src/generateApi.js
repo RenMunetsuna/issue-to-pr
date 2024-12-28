@@ -10,6 +10,14 @@ import { join } from 'path';
  */
 class ApiGenerator {
   constructor(anthropicApiKey, githubToken, workspaceRoot) {
+    // APIキーの状態を確認
+    console.log('Constructor API Key status:', {
+      exists: !!anthropicApiKey,
+      length: anthropicApiKey?.length,
+      prefix: anthropicApiKey?.substring(0, 20),
+      isString: typeof anthropicApiKey === 'string'
+    });
+
     // Claude 3 Sonnetモデルの初期化
     this.model = new ChatAnthropic({
       anthropicApiKey,
@@ -280,6 +288,14 @@ export async function main() {
       REPO_NAME,
       ISSUE_CONTENT
     } = process.env;
+
+    // APIキーのデバッグ情報を追加
+    console.log('API Key status:', {
+      exists: !!ANTHROPIC_API_KEY,
+      length: ANTHROPIC_API_KEY?.length,
+      prefix: ANTHROPIC_API_KEY?.substring(0, 20),
+      isString: typeof ANTHROPIC_API_KEY === 'string'
+    });
 
     console.log('Validating environment variables...');
     const missingVars = [];
