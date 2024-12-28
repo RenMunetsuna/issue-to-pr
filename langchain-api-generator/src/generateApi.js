@@ -163,17 +163,10 @@ class ApiGenerator {
         content: issue.content
       });
 
-      const response = await this.model.invoke([
-        {
-          role: 'system',
-          content:
-            'TypeScriptのエキスパートエンジニアとして、クリーンで保守性高いコードを生成してください。'
-        },
-        {
-          role: 'user',
-          content: formattedPrompt
-        }
-      ]);
+      const response = await this.model.invoke(formattedPrompt);
+
+      console.log('LLM Response:', response);
+      console.log('LLM Response Content:', response.content);
 
       console.log('Code generation completed');
       const files = this.parseGeneratedCode(response.content);
