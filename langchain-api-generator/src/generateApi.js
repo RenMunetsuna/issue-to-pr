@@ -450,7 +450,21 @@ export async function main() {
     let issue;
     try {
       console.log('Raw ISSUE_CONTENT:', ISSUE_CONTENT);
-      issue = JSON.parse(ISSUE_CONTENT);
+      // ISSUECONTENTが二重にJSON文字列化されている可能性があるため、必要に応じて2回パースする
+      let parsedContent;
+      try {
+        // 最初のパース
+        parsedContent = JSON.parse(ISSUE_CONTENT);
+        // 文字列として渡された場合は2回目のパースを試みる
+        if (typeof parsedContent === 'string') {
+          console.log('Content is still a string, attempting second parse');
+          parsedContent = JSON.parse(parsedContent);
+        }
+      } catch (parseError) {
+        throw new Error(`JSON parse error: ${parseError.message}`);
+      }
+
+      issue = parsedContent;
       console.log('Parsed issue:', JSON.stringify(issue, null, 2));
 
       // イシューの内容を検証
@@ -474,6 +488,11 @@ export async function main() {
         hasEndpoint: issue.content.includes('エンドポイント')
       });
     } catch (error) {
+      console.error('Parse error details:', {
+        error: error.message,
+        content: ISSUE_CONTENT,
+        typeof_content: typeof ISSUE_CONTENT
+      });
       throw new Error(
         `Failed to parse or validate ISSUE_CONTENT: ${error.message}\nContent: ${ISSUE_CONTENT}`
       );
