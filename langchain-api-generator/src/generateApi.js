@@ -1,159 +1,137 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { createApiGenerationPrompt } from './prompt/apiGenerationPrompt.js';
-import { PullRequestCreator } from './github/PullRequestCreator.js';
+import { createPullRequest } from './github/PullRequestCreator.js';
 import { loadAllDocuments } from './utils/documentLoader.js';
-import { printDirectoryStructure } from './utils/directoryPrinter.js';
 import { parseGeneratedCode } from './utils/codeParser.js';
+import { validateEnvVars } from './utils/envValidator.js';
 
 /**
- * API生成を担当するメインクラス
- * LangChainとGitHub APIを使用してAPIコードを生成しPRを作成する
+ * APIコードを生成する
+ * @param {object} params - パラメータ
+ * @param {string} params.anthropicApiKey - Anthropic APIキー
+ * @param {object} params.issue - Issue情報
+ * @returns {Promise<object>} 生成されたコード
  */
-class ApiGenerator {
-  constructor(anthropicApiKey, githubToken, workspaceRoot) {
-    this.model = new ChatAnthropic({
+const generateApiCode = async ({ anthropicApiKey, issue }) => {
+  try {
+    if (!issue || typeof issue !== 'object')
+      throw new Error('Issueオブジェクトが無効です');
+
+    const { title, content } = issue;
+    if (!title || !content)
+      throw new Error(`必須フィールドが不足しています:
+        タイトル: ${title ? 'あり' : 'なし'}
+        内容: ${content ? 'あり' : 'なし'}`);
+
+    // モデルの初期化
+    const model = new ChatAnthropic({
       anthropicApiKey,
       modelName: 'claude-3-sonnet-20240229'
     });
-    this.prCreator = new PullRequestCreator(githubToken);
-    this.workspaceRoot = workspaceRoot;
 
-    // ワークスペースの構造を確認
-    printDirectoryStructure(this.workspaceRoot);
+    // ドキュメントの読み込み
+    const docs = loadAllDocuments([
+      'ARCHITECTURE.md',
+      'SCHEMA.md',
+      'CONTROLLER.md',
+      'DATABASE_SERVICES.md'
+    ]);
+
+    // プロンプトテンプレートの設定と実行
+    const prompt = createApiGenerationPrompt();
+    const formattedPrompt = await prompt.format({
+      ...docs,
+      title: issue.title,
+      content: issue.content
+    });
+
+    const response = await model.invoke(formattedPrompt);
+    const files = parseGeneratedCode(response.content);
+
+    console.log('生成されたファイル:', Object.keys(files));
+    return files;
+  } catch (error) {
+    console.error('APIコード生成中にエラーが発生しました:', error);
+    throw error;
   }
+};
 
-  /**
-   * APIコードを生成する
-   * @param {object} issue - Issue情報
-   * @returns {Promise<object>} 生成されたコード
-   */
-  async generateApiCode(issue) {
+/**
+ * Issueの内容をパースして検証する
+ * @param {string} issueContent - IssueのJSON文字列
+ * @returns {object} パース済みのIssueオブジェクト
+ */
+const parseAndValidateIssue = (issueContent) => {
+  try {
+    let parsedContent;
     try {
-      if (!issue || typeof issue !== 'object') {
-        throw new Error('Invalid issue object');
+      parsedContent = JSON.parse(issueContent);
+      if (typeof parsedContent === 'string') {
+        parsedContent = JSON.parse(parsedContent);
       }
-
-      const { title, content } = issue;
-      if (!title || !content) {
-        throw new Error(`Invalid issue format. Required fields are missing:
-          title: ${title ? 'present' : 'missing'}
-          content: ${content ? 'present' : 'missing'}`);
-      }
-
-      // ドキュメントの読み込み
-      const docs = loadAllDocuments([
-        'ARCHITECTURE.md',
-        'SCHEMA.md',
-        'CONTROLLER.md',
-        'DATABASE_SERVICES.md'
-      ]);
-
-      // プロンプトテンプレートの設定と実行
-      const prompt = createApiGenerationPrompt();
-      const formattedPrompt = await prompt.format({
-        ...docs,
-        title: issue.title,
-        content: issue.content
-      });
-
-      const response = await this.model.invoke(formattedPrompt);
-      const files = parseGeneratedCode(response.content);
-
-      console.log('Generated files:', Object.keys(files));
-      return files;
-    } catch (error) {
-      console.error('Error in generateApiCode:', error);
-      throw error;
+    } catch (parseError) {
+      throw new Error(`JSONのパースに失敗しました: ${parseError.message}`);
     }
+
+    const issue = parsedContent;
+
+    if (!issue || typeof issue !== 'object')
+      throw new Error('Issueの形式が無効です: オブジェクトではありません');
+
+    if (!issue.title || typeof issue.title !== 'string')
+      throw new Error('Issueの形式が無効です: タイトルが不正です');
+
+    if (!issue.content || typeof issue.content !== 'string')
+      throw new Error('Issueの形式が無効です: 内容が不正です');
+
+    return issue;
+  } catch (error) {
+    throw new Error(`Issueのパースと検証に失敗しました: ${error.message}`);
   }
-}
+};
 
 // GitHub Actions から呼び出されるメイン関数
-export async function main() {
+export const main = async () => {
   try {
-    const {
-      ANTHROPIC_API_KEY,
-      GITHUB_TOKEN,
-      ISSUE_NUMBER,
-      REPO_OWNER,
-      REPO_NAME,
-      ISSUE_CONTENT
-    } = process.env;
+    // 環境変数の検証
+    const env = validateEnvVars([
+      'ANTHROPIC_API_KEY',
+      'GITHUB_TOKEN',
+      'ISSUE_NUMBER',
+      'REPO_OWNER',
+      'REPO_NAME',
+      'ISSUE_CONTENT'
+    ]);
 
-    // 必須環境変数の確認
-    const missingVars = [];
-    if (!ANTHROPIC_API_KEY) missingVars.push('ANTHROPIC_API_KEY');
-    if (!GITHUB_TOKEN) missingVars.push('GITHUB_TOKEN');
-    if (!ISSUE_NUMBER) missingVars.push('ISSUE_NUMBER');
-    if (!REPO_OWNER) missingVars.push('REPO_OWNER');
-    if (!REPO_NAME) missingVars.push('REPO_NAME');
-    if (!ISSUE_CONTENT) missingVars.push('ISSUE_CONTENT');
+    // Issueの検証
+    const issue = parseAndValidateIssue(env.ISSUE_CONTENT);
 
-    if (missingVars.length > 0) {
-      throw new Error(
-        `Missing required environment variables: ${missingVars.join(', ')}`
-      );
-    }
+    // APIコードの生成
+    const generatedFiles = await generateApiCode({
+      anthropicApiKey: env.ANTHROPIC_API_KEY,
+      githubToken: env.GITHUB_TOKEN,
+      issue
+    });
 
-    // Issueの内容をパース
-    let issue;
-    try {
-      let parsedContent;
-      try {
-        parsedContent = JSON.parse(ISSUE_CONTENT);
-        if (typeof parsedContent === 'string') {
-          parsedContent = JSON.parse(parsedContent);
-        }
-      } catch (parseError) {
-        throw new Error(`JSON parse error: ${parseError.message}`);
-      }
+    if (!generatedFiles || Object.keys(generatedFiles).length === 0)
+      throw new Error('ファイルが生成されませんでした');
 
-      issue = parsedContent;
-
-      if (!issue || typeof issue !== 'object') {
-        throw new Error('Invalid issue format: not an object');
-      }
-
-      if (!issue.title || typeof issue.title !== 'string') {
-        throw new Error('Invalid issue format: missing or invalid title');
-      }
-
-      if (!issue.content || typeof issue.content !== 'string') {
-        throw new Error('Invalid issue format: missing or invalid content');
-      }
-    } catch (error) {
-      throw new Error(
-        `Failed to parse or validate ISSUE_CONTENT: ${error.message}`
-      );
-    }
-
-    // API生成の実行
-    const generator = new ApiGenerator(
-      ANTHROPIC_API_KEY,
-      GITHUB_TOKEN,
-      process.cwd()
-    );
-
-    const generatedFiles = await generator.generateApiCode(issue);
-    if (!generatedFiles || Object.keys(generatedFiles).length === 0) {
-      throw new Error('No files were generated');
-    }
-
-    // PRの作成
-    await generator.prCreator.createPullRequest(
-      REPO_OWNER,
-      REPO_NAME,
-      ISSUE_NUMBER,
-      generatedFiles
-    );
-    console.log('Pull request created successfully');
+    // プルリクエストの作成
+    await createPullRequest({
+      githubToken: env.GITHUB_TOKEN,
+      owner: env.REPO_OWNER,
+      repo: env.REPO_NAME,
+      issueNumber: Number(env.ISSUE_NUMBER),
+      files: generatedFiles
+    });
+    console.log('プルリクエストの作成が完了しました');
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('エラー:', error.message);
     process.exit(1);
   }
-}
+};
 
 main().catch((error) => {
-  console.error('Unhandled error:', error.message);
+  console.error('予期せぬエラーが発生しました:', error.message);
   process.exit(1);
 });

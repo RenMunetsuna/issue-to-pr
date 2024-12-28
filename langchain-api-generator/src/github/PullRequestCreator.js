@@ -1,94 +1,99 @@
 import { Octokit } from '@octokit/rest';
 
-export class PullRequestCreator {
-  constructor(githubToken) {
-    this.octokit = new Octokit({ auth: githubToken });
-  }
+/**
+ * 生成されたコードをPRとして作成
+ * @param {object} params - パラメータ
+ * @param {string} params.githubToken - GitHubトークン
+ * @param {string} params.owner - リポジトリオーナー
+ * @param {string} params.repo - リポジトリ名
+ * @param {number} params.issueNumber - Issue番号
+ * @param {object} params.files - 生成されたファイル群
+ * @returns {Promise<object>} 作成されたPRの情報
+ */
+export async function createPullRequest({
+  githubToken,
+  owner,
+  repo,
+  issueNumber,
+  files
+}) {
+  try {
+    const octokit = new Octokit({ auth: githubToken });
 
-  /**
-   * 生成されたコードをPRとして作成
-   * @param {string} owner - リポジトリオーナー
-   * @param {string} repo - リポジトリ名
-   * @param {number} issueNumber - Issue番号
-   * @param {object} generatedFiles - 生成されたファイル群
-   */
-  async createPullRequest(owner, repo, issueNumber, generatedFiles) {
-    try {
-      // Get issue title
-      console.log('Getting issue title...');
-      const { data: issue } = await this.octokit.issues.get({
-        owner,
-        repo,
-        issue_number: issueNumber
-      });
-      const issueTitle = issue.title;
-      const timestamp = Date.now().toString().slice(-6);
+    // Issueのタイトルを取得
+    console.log('Issueのタイトルを取得中...');
+    const { data: issue } = await octokit.issues.get({
+      owner,
+      repo,
+      issue_number: issueNumber
+    });
+    const issueTitle = issue.title;
+    const timestamp = Date.now().toString().slice(-6);
 
-      // Create branch name with timestamp
-      const branchName = `feature/${issueNumber}-${timestamp}`;
-      const defaultBranch = 'main';
+    // ブランチ名を生成
+    const branchName = `feature/${issueNumber}-${timestamp}`;
+    const defaultBranch = 'main';
 
-      // Get the SHA of the default branch
-      console.log('Getting default branch SHA...');
-      const { data: defaultBranchData } = await this.octokit.repos.getBranch({
-        owner,
-        repo,
-        branch: defaultBranch
-      });
-      const baseSha = defaultBranchData.commit.sha;
+    // デフォルトブランチのSHAを取得
+    console.log('デフォルトブランチのSHAを取得中...');
+    const { data: defaultBranchData } = await octokit.repos.getBranch({
+      owner,
+      repo,
+      branch: defaultBranch
+    });
+    const baseSha = defaultBranchData.commit.sha;
 
-      // Create a new branch
-      console.log(`Creating branch: ${branchName}`);
-      await this.octokit.git.createRef({
-        owner,
-        repo,
-        ref: `refs/heads/${branchName}`,
-        sha: baseSha
-      });
+    // 新しいブランチを作成
+    console.log(`ブランチを作成中: ${branchName}`);
+    await octokit.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${branchName}`,
+      sha: baseSha
+    });
 
-      // Create commits for each file
-      console.log('Creating commits...');
-      for (const [fileName, content] of Object.entries(generatedFiles)) {
-        if (!content || content.trim() === '') {
-          console.warn(`Skipping empty file: ${fileName}`);
-          continue;
-        }
-
-        const filePath = `apps/server/src/routes/app/users/${fileName}`;
-        console.log(`Creating commit for file: ${filePath}`);
-
-        try {
-          await this.octokit.repos.createOrUpdateFileContents({
-            owner,
-            repo,
-            path: filePath,
-            message: `feat: Add ${fileName}`,
-            content: Buffer.from(content).toString('base64'),
-            branch: branchName
-          });
-          console.log(`Successfully created/updated file: ${filePath}`);
-        } catch (error) {
-          console.error(`Error creating/updating file ${filePath}:`, error);
-          throw error;
-        }
+    // 各ファイルのコミットを作成
+    console.log('コミットを作成中...');
+    for (const [fileName, content] of Object.entries(files)) {
+      if (!content || content.trim() === '') {
+        console.warn(`空のファイルをスキップします: ${fileName}`);
+        continue;
       }
 
-      // Create pull request
-      console.log('Creating pull request...');
-      const { data: pr } = await this.octokit.pulls.create({
-        owner,
-        repo,
-        title: `${issueTitle} (#${issueNumber}-${timestamp})`,
-        body: `Closes #${issueNumber}`,
-        head: branchName,
-        base: defaultBranch
-      });
+      const filePath = `apps/server/src/routes/app/users/${fileName}`;
+      console.log(`ファイルを作成中: ${filePath}`);
 
-      console.log('Pull request created:', pr.html_url);
-      return pr;
-    } catch (error) {
-      console.error('Error in createPullRequest:', error);
-      throw error;
+      try {
+        await octokit.repos.createOrUpdateFileContents({
+          owner,
+          repo,
+          path: filePath,
+          message: `feat: ${fileName} を追加`,
+          content: Buffer.from(content).toString('base64'),
+          branch: branchName
+        });
+        console.log(`ファイルの作成が完了しました: ${filePath}`);
+      } catch (error) {
+        console.error(`ファイルの作成に失敗しました ${filePath}:`, error);
+        throw error;
+      }
     }
+
+    // プルリクエストを作成
+    console.log('プルリクエストを作成中...');
+    const { data: pr } = await octokit.pulls.create({
+      owner,
+      repo,
+      title: `${issueTitle} (#${issueNumber}-${timestamp})`,
+      body: `Closes #${issueNumber}`,
+      head: branchName,
+      base: defaultBranch
+    });
+
+    console.log('プルリクエストが作成されました:', pr.html_url);
+    return pr;
+  } catch (error) {
+    console.error('プルリクエストの作成中にエラーが発生しました:', error);
+    throw error;
   }
 }
