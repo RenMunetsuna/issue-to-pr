@@ -15,7 +15,7 @@ export const createApiGenerationPrompt = () => {
 \${controller}
 
 # データベースサービスガイドライン
-\${database}
+\${database_services}
 
 # テストガイドライン
 \${testing}
@@ -28,12 +28,11 @@ export const createApiGenerationPrompt = () => {
 以下の要件に従ってください：
 1. コードは TypeScript で記述してください
 2. エラーハンドリングを適切に実装してください
-3. テストコードは Jest を使用してください
-4. コードはクリーンアーキテクチャの原則に従ってください
-5. 必要なインポート文をすべて含めてください
-6. ESLintのルールに従ってください
-7. パフォーマンス��考慮したPrismaクエリを実装してください
-8. 適切なエラーコードとステータスコードを使用してください
+3. コードはクリーンアーキテクチャの原則に従ってください
+4. 必要なインポート文をすべて含めてください
+5. ESLintのルールに従ってください
+6. パフォーマンスを考慮したPrismaクエリを実装してください
+7. 適切なエラーコードとステータスコードを使用してください
 
 出力フォーマット:
 各ファイルは以下の形式で出力してください：
@@ -53,8 +52,7 @@ export const createApiGenerationPrompt = () => {
       'architecture',
       'schema',
       'controller',
-      'database',
-      'testing',
+      'database_services',
       'title',
       'content'
     ]
