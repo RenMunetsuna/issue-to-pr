@@ -77,6 +77,10 @@ class ApiGenerator {
   async generateApiCode(issue) {
     try {
       console.log('Reading project documentation...');
+      // APIキーのプレフィックスを確認
+      const apiKeyPrefix = this.model.anthropicApiKey.substring(0, 4);
+      console.log('ANTHROPIC_API_KEY prefix:', apiKeyPrefix);
+
       const architectureDoc = this.readDocFile('ARCHITECTURE.md');
       const schemaDoc = this.readDocFile('SCHEMA.md');
       const controllerDoc = this.readDocFile('CONTROLLER.md');
