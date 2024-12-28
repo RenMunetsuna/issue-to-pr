@@ -112,24 +112,24 @@ class ApiGenerator {
 以下のプロジェクトのアーキテクチャとガイドラインに従って、APIエンドポイントを実装してください。
 
 # プロジェクトアーキテクチャ
-{architecture}
+{{architecture}}
 
 # スキーマガイドライン
-{schema}
+{{schema}}
 
 # コントローラーガイドライン
-{controller}
+{{controller}}
 
 # データベースサービスガイドライン
-{database}
+{{database}}
 
 # テストガイドライン
-{testing}
+{{testing}}
 
 # Issue情報
-タイトル: {title}
+タイトル: {{title}}
 内容:
-{content}
+{{content}}
 
 以下の要件に従ってください：
 1. コードは TypeScript で記述してください
