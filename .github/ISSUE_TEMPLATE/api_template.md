@@ -8,11 +8,7 @@ assignees: ''
 
 ### メソッド
 
-- [ ] GET
-- [ ] POST
-- [ ] PUT
-- [ ] DELETE
-- [ ] PATCH
+<!-- GET, POST, PUT, DELETE, PATCH -->
 
 ### エンドポイント
 
@@ -59,5 +55,3 @@ assignees: ''
 ### 補足
 
 <!-- 認証要件や特記事項があれば記載 -->
-
-
