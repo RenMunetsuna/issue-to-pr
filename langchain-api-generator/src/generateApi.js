@@ -26,7 +26,7 @@ const generateApiCode = async ({ anthropicApiKey, issue }) => {
       'DATABASE_SERVICES.md'
     ]);
 
-    const prismaSchema = fileLoader('../../apps/server/prisma/schema.prisma');
+    const prismaSchema = fileLoader('apps/server/prisma/schema.prisma');
 
     // プロンプトの作成
     const prompt = createApiGenerationPrompt();
