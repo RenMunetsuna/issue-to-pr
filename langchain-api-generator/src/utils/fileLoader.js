@@ -3,7 +3,10 @@ import path from 'path';
 
 export const fileLoader = (filePath) => {
   try {
-    const targetPath = path.resolve(process.cwd(), filePath);
+    const projectRoot = path.resolve(process.cwd(), '..');
+    const targetPath = path.resolve(projectRoot, filePath);
+
+    console.log('Project root:', projectRoot);
     console.log('Attempting to read file:', targetPath);
     console.log('Current working directory:', process.cwd());
 
@@ -20,6 +23,7 @@ export const fileLoader = (filePath) => {
     console.error('File loading error details:', {
       filePath,
       cwd: process.cwd(),
+      projectRoot: path.resolve(process.cwd(), '..'),
       error: error.message,
       stack: error.stack
     });
