@@ -49,6 +49,8 @@ jobs:
           script: |
             const issueBody = context.payload.issue.body;
             const issueTitle = context.payload.issue.title;
+            console.log('Issue Title:', issueTitle);
+            console.log('Issue Body:', issueBody);
 
             const parsed = {
               title: issueTitle,
@@ -56,13 +58,17 @@ jobs:
               number: context.payload.issue.number,
               labels: context.payload.issue.labels.map(label => label.name)
             };
-
+            console.log('Parsed Content:', JSON.stringify(parsed, null, 2));
             return JSON.stringify(parsed);
 
       - name: Generate API code
+        id: generate
         run: |
           cd langchain-api-generator
+          echo "Starting API generation..."
+          echo "Issue content: $ISSUE_CONTENT"
           pnpm generate
+          echo "API generation completed"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -70,3 +76,22 @@ jobs:
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
           ISSUE_CONTENT: ${{ steps.parse.outputs.result }}
+
+      - name: Check PR creation
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `api-generate-${context.payload.issue.number}`
+            });
+            console.log('Found PRs:', prs.data);
+            if (prs.data.length === 0) {
+              console.log('No PR was created');
+              core.setFailed('PR creation failed');
+            } else {
+              console.log('PR was created successfully:', prs.data[0].html_url);
+            }
