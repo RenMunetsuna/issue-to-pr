@@ -150,10 +150,23 @@ class ApiGenerator {
 4. コードはクリーンアーキテクチャの原則に従ってください
 5. 必要なインポート文をすべて含めてください
 6. ESLintのルールに従ってください
-7. パフォーマンスを考慮したPrismaクエリを実装してくだ���い
+7. パフォーマンスを考慮したPrismaクエリを実装してください
 8. 適切なエラーコードとステータスコードを使用してください
 
-以下のファイルを生成してください。各ファイルは ### ファイル名 ### で区切って出力してください。`,
+出力フォーマット:
+各ファイルは以下の形式で出力してください：
+
+### ファイル名.ts ###
+\`\`\`typescript
+// ファイルの内容
+\`\`\`
+
+注意事項：
+- ファイル名とコードブロックの間に余分な空行や文字を入れないでください
+- 各ファイルの区切りには必ず ### を使用してください
+- コードブロックは必ず \`\`\`typescript で開始し、\`\`\` で終了してください
+- 説明文やコメントは各ファイルのコードブロック内に記述してください
+- ファイル名は拡張子(.ts)を含めて記述してください`,
         inputVariables: [
           'architecture',
           'schema',
@@ -193,13 +206,13 @@ class ApiGenerator {
 
   parseGeneratedCode(content) {
     console.log('Parsing generated code...');
-    // ### で区切られたセクションを分割
+    const files = {};
+
+    // セクションを分割して処理
     const sections = content
-      .split(/###\s*([^#]+?)\s*###/)
+      .split(/###\s*([^#\n]+)\s*###/)
       .filter(Boolean)
       .map((section) => section.trim());
-
-    const files = {};
 
     // セクションを2つずつ処理（ファイル名とコンテンツのペア）
     for (let i = 0; i < sections.length; i += 2) {
@@ -209,13 +222,20 @@ class ApiGenerator {
       if (fileName && fileContent) {
         // コードブロックのマーカーを削除
         const cleanContent = fileContent
-          .replace(/^```typescript\n/, '')
-          .replace(/^```\n/, '')
-          .replace(/```$/, '')
+          .replace(/^```(?:typescript)?\n/, '')
+          .replace(/\n```$/, '')
           .trim();
 
-        files[fileName] = cleanContent;
-        console.log(`Parsed file: ${fileName} (${cleanContent.length} bytes)`);
+        // ファイル名から不要な文字を削除
+        const cleanFileName = fileName
+          .replace(/^```(?:typescript)?\s*/, '')
+          .replace(/\s*```$/, '')
+          .trim();
+
+        files[cleanFileName] = cleanContent;
+        console.log(
+          `Parsed file: ${cleanFileName} (${cleanContent.length} bytes)`
+        );
       }
     }
 
@@ -265,30 +285,33 @@ class ApiGenerator {
 
       // Create commits for each file
       console.log('Creating commits...');
-      for (const [path, content] of Object.entries(generatedFiles)) {
+      for (const [fileName, content] of Object.entries(generatedFiles)) {
         if (!content || content.trim() === '') {
-          console.warn(`Skipping empty file: ${path}`);
+          console.warn(`Skipping empty file: ${fileName}`);
           continue;
         }
 
-        console.log(`Creating commit for file: ${path}`);
+        // ファイルパスを構築
+        const filePath = `apps/server/src/routes/app/users/${fileName}`;
+        console.log(`Creating commit for file: ${filePath}`);
+
         try {
           await this.octokit.repos.createOrUpdateFileContents({
             owner,
             repo,
-            path: `apps/server/src/routes/app/users/${path}`,
-            message: `feat: Add ${path}`,
+            path: filePath,
+            message: `feat: Add ${fileName}`,
             content: Buffer.from(content).toString('base64'),
             branch: branchName
           });
-          console.log(`Successfully created/updated file: ${path}`);
+          console.log(`Successfully created/updated file: ${filePath}`);
         } catch (error) {
-          console.error(`Error creating/updating file ${path}:`, error);
+          console.error(`Error creating/updating file ${filePath}:`, error);
           throw error;
         }
       }
 
-      // Create pull request with issue title and timestamp
+      // Create pull request
       console.log('Creating pull request...');
       const { data: pr } = await this.octokit.pulls.create({
         owner,
@@ -322,7 +345,7 @@ export async function main() {
       ISSUE_CONTENT
     } = process.env;
 
-    // APIキーのデバッグ情報を追加
+    // APIキーのデバッグ情報を追���
     console.log('API Key status:', {
       exists: !!ANTHROPIC_API_KEY,
       length: ANTHROPIC_API_KEY?.length,
