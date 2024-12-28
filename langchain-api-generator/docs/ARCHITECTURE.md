@@ -24,12 +24,9 @@ src/
 │   │   ├── auth/            # 認証関連
 │   │   │   ├── connect/     # WAONカード連携など
 │   │   │   │   ├── _handlers.ts                        # ルートハンドラー
-│   │   │   │   ├── _handlers.e2e.test.ts              # E2Eテスト
 │   │   │   │   ├── schema.ts                          # スキーマ定義
 │   │   │   │   ├── connectWaonCardInDB.ts             # サービス実装
-│   │   │   │   ├── connectWaonCardInDB.test.ts        # サービステスト
 │   │   │   │   ├── extractParamsForConnectWaonCard.ts # パラメータ抽出
-│   │   │   │   └── extractParamsForConnectWaonCard.test.ts
 │   │   │   └── ...
 │   │   └── users/           # ユーザー関連
 │   │       ├── _userId/     # ユーザーID指定の操作
@@ -49,12 +46,9 @@ src/
 各エンドポイントディレクトリの構成例（WAONカード連携の場合）：
 
 - `_handlers.ts` - ルートハンドラーとエンドポイント定義
-- `_handlers.e2e.test.ts` - エンドポイントのE2Eテスト
 - `schema.ts` - リクエスト/レスポンスのスキーマ定義
 - `{操作名}InDB.ts` - データベース操作を含むサービス実装 取得はFromDB.ts、追加や更新はInDB.ts
-- `{操作名}InDB.test.ts` - サービスのユニットテスト
 - `extractParamsFor{操作名}.ts` - リクエストパラメータの抽出とバリデーション
-- `extractParamsFor{操作名}.test.ts` - パラメータ抽出のテスト
 
 ## 各レイヤーの責務
 
