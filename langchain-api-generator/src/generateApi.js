@@ -45,8 +45,7 @@ class ApiGenerator {
         'ARCHITECTURE.md',
         'SCHEMA.md',
         'CONTROLLER.md',
-        'DATABASE_SERVICES.md',
-        'TESTING.md'
+        'DATABASE_SERVICES.md'
       ]);
 
       // プロンプトテンプレートの設定と実行
