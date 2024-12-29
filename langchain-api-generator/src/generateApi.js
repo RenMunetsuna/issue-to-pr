@@ -5,8 +5,6 @@ import { loadAllDocuments } from './utils/documentLoader.js';
 import { parseGeneratedCode } from './utils/codeParser.js';
 import { validateEnvVars } from './utils/envValidator.js';
 import { parseAndValidateIssue } from './utils/issueValidator.js';
-import fs from 'fs';
-import path from 'path';
 import { fileLoader } from './utils/fileLoader.js';
 
 /**
@@ -45,7 +43,7 @@ const generateApiCode = async ({ anthropicApiKey, issue }) => {
     // モデルの初期化
     const model = new ChatAnthropic({
       anthropicApiKey,
-      modelName: 'claude-3-sonnet-20240229'
+      modelName: 'claude-3-5-sonnet-20241022'
     });
 
     // リクエストの送信
