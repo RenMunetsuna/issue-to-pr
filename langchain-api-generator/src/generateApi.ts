@@ -1,12 +1,12 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { Octokit } from '@octokit/rest';
-import { createApiGenerationPrompt } from './prompts/apiGenerationPrompt';
-import { createPullRequest } from './github/pullRequest';
-import { loadDocuments } from './utils/documentLoader';
-import { parseGeneratedCode } from './utils/codeParser';
-import { validateEnvVars } from './utils/envValidator';
-import { fetchIssueDetails, GitHubIssue } from './github/issue';
-import { fileLoader } from './utils/fileLoader';
+import { createApiGenerationPrompt } from './prompts/apiGenerationPrompt.js';
+import { createPullRequest } from './github/pullRequest.js';
+import { loadDocuments } from './utils/documentLoader.js';
+import { parseGeneratedCode } from './utils/codeParser.js';
+import { validateEnvVars } from './utils/envValidator.js';
+import { fetchIssueDetails, GitHubIssue } from './github/issue.js';
+import { fileLoader } from './utils/fileLoader.js';
 
 type RequiredIssueFields = Pick<GitHubIssue, 'title' | 'body' | 'number'>;
 
