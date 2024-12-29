@@ -12,23 +12,25 @@ export const parseGeneratedCode = (content: string): Record<string, string> => {
     .map((section) => section.trim());
 
   // セクションを2つずつ処理（ファイル名とコンテンツのペア）
-  for (let i = 0; i < sections.length; i += 2) {
-    const fileName = sections[i].trim();
+  for (let i = 0; i < sections.length - 1; i += 2) {
+    const fileName = sections[i];
     const fileContent = sections[i + 1];
 
-    if (fileName && fileContent) {
-      // コードブロックのマーカーを削除
-      const cleanContent = fileContent
-        .replace(/^```(?:typescript)?\n/, '')
-        .replace(/\n```$/, '')
-        .trim();
+    if (!fileName || !fileContent) continue;
 
-      // ファイル名から不要な文字を削除
-      const cleanFileName = fileName
-        .replace(/^```(?:typescript)?\s*/, '')
-        .replace(/\s*```$/, '')
-        .trim();
+    // コードブロックのマーカーを削除
+    const cleanContent = fileContent
+      .replace(/^```(?:typescript)?\n/, '')
+      .replace(/\n```$/, '')
+      .trim();
 
+    // ファイル名から不要な文字を削除
+    const cleanFileName = fileName
+      .replace(/^```(?:typescript)?\s*/, '')
+      .replace(/\s*```$/, '')
+      .trim();
+
+    if (cleanFileName && cleanContent) {
       files[cleanFileName] = cleanContent;
     }
   }
