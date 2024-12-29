@@ -53,16 +53,25 @@ const generateApiCode = async ({
       body: issue.body?.length ?? 0
     });
 
-    const formattedPrompt = await prompt.format({
-      architecture: docs['architecture'] ?? '',
-      schema: docs['schema'] ?? '',
-      controller: docs['controller'] ?? '',
-      database_services: docs['database_services'] ?? '',
-      prismaSchema: prismaSchema ?? '',
-      title: issue.title ?? '',
-      content: issue.body ?? ''
+    // プロンプトのパラメータを準備
+    const promptParams = {
+      architecture: String(docs['architecture'] ?? ''),
+      schema: String(docs['schema'] ?? ''),
+      controller: String(docs['controller'] ?? ''),
+      database_services: String(docs['database_services'] ?? ''),
+      prismaSchema: String(prismaSchema ?? ''),
+      title: String(issue.title ?? ''),
+      content: String(issue.body ?? '')
+    };
+
+    // パラメータの存在確認
+    Object.entries(promptParams).forEach(([key, value]) => {
+      if (!value) {
+        console.warn(`警告: プロンプトパラメータ "${key}" が空です`);
+      }
     });
 
+    const formattedPrompt = await prompt.format(promptParams);
     console.log('フォーマット済みプロンプト長:', formattedPrompt.length);
 
     // モデルの初期化
