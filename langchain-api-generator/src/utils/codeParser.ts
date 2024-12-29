@@ -54,9 +54,8 @@ export const parseGeneratedCode = (content: string): Record<string, string> => {
     (file) => !Object.keys(files).some((path) => path.endsWith(`/${file}`))
   );
 
-  if (missingFiles.length > 0) {
+  if (missingFiles.length > 0)
     throw new Error(`必須ファイルが不足しています: ${missingFiles.join(', ')}`);
-  }
 
   return files;
 };

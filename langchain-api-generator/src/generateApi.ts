@@ -63,7 +63,7 @@ const generateApiCode = async ({
     const content = response.content;
     if (typeof content !== 'string') throw new Error('Expected string content');
 
-    console.log('LLMのレスポンス', content);
+    console.log('LLMのレスポンス:', content);
 
     // 生成されたコードをファイル単位でパース
     const files = parseGeneratedCode(content);
