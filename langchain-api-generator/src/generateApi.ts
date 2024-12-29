@@ -63,6 +63,8 @@ const generateApiCode = async ({
     const content = response.content;
     if (typeof content !== 'string') throw new Error('Expected string content');
 
+    console.log('LLMのレスポンス', content);
+
     // 生成されたコードをファイル単位でパース
     const files = parseGeneratedCode(content);
 
@@ -102,10 +104,12 @@ export const main = async (): Promise<void> => {
       Number(env.ISSUE_NUMBER),
       ['title', 'body', 'number']
     );
+    console.log('issueを取得', issue);
 
     if (!issue.title || !issue.body || !issue.number)
       throw new Error('Required issue fields are missing');
 
+    console.log('コード生成リクエスト中...');
     // コードを生成
     const generatedFiles = await generateApiCode({
       anthropicApiKey: env.ANTHROPIC_API_KEY,
@@ -115,6 +119,7 @@ export const main = async (): Promise<void> => {
         number: issue.number
       }
     });
+    console.log('コード生成完了');
 
     // プルリクエストを作成
     await createPullRequest({
