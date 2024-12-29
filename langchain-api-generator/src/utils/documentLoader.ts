@@ -14,10 +14,12 @@ export const readDocFile = (filename: string) => {
     return readFileSync(filePath, 'utf-8');
   } catch (error) {
     console.warn(
-      `ドキュメントファイル ${filename} の読み込みに失敗しました: ${error.message}`
+      `ドキュメントファイル ${filename} の読み込みに失敗しました: ${String(
+        error
+      )}`
     );
-    return '';
   }
+  return '';
 };
 
 /**
@@ -26,7 +28,7 @@ export const readDocFile = (filename: string) => {
 export const loadDocuments = (
   documentFiles: string[]
 ): Record<string, string> => {
-  return documentFiles.reduce((acc, filename) => {
+  return documentFiles.reduce<Record<string, string>>((acc, filename) => {
     const key = filename.replace('.md', '').toLowerCase();
     acc[key] = readDocFile(filename);
     return acc;

@@ -103,10 +103,17 @@ export const main = async (): Promise<void> => {
       ['title', 'body', 'number']
     );
 
+    if (!issue.title || !issue.body || !issue.number)
+      throw new Error('Required issue fields are missing');
+
     // コードを生成
     const generatedFiles = await generateApiCode({
       anthropicApiKey: env.ANTHROPIC_API_KEY,
-      issue
+      issue: {
+        title: issue.title,
+        body: issue.body,
+        number: issue.number
+      }
     });
 
     // プルリクエストを作成
