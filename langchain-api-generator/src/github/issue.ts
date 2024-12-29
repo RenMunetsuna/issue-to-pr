@@ -2,7 +2,7 @@ import { Octokit } from '@octokit/rest';
 import type { components } from '@octokit/openapi-types';
 
 export type GitHubIssue = components['schemas']['issue'];
-type IssueField = keyof GitHubIssue;
+export type IssueField = keyof GitHubIssue;
 
 type PickIssueFields<T extends IssueField> = {
   [K in T]: GitHubIssue[K];
@@ -10,12 +10,6 @@ type PickIssueFields<T extends IssueField> = {
 
 /**
  * イシューの詳細情報を取得する
- * @param octokit Octokitインスタンス
- * @param owner リポジトリのオーナー
- * @param repo リポジトリ名
- * @param issueNumber イシュー番号
- * @param fields 取得したいフィールドの配列
- * @returns 指定されたフィールドを持つイシューの情報
  */
 export const fetchIssueDetails = async <T extends IssueField>(
   octokit: Octokit,
@@ -30,33 +24,32 @@ export const fetchIssueDetails = async <T extends IssueField>(
     issue_number: issueNumber
   });
 
-  // 型安全な方法でオブジェクトを構築
-  const result = fields.reduce<Partial<PickIssueFields<T>>>((acc, field) => {
-    acc[field] = issue[field];
-    return acc;
-  }, {});
-
-  // すべてのフィールドが存在することを確認
-  for (const field of fields) {
-    if (!(field in result))
-      throw new Error(`issueのフィールド ${field} が存在しません`);
-  }
-
-  return result as PickIssueFields<T>;
+  return validateAndPickFields(issue, fields);
 };
 
 /**
- * イシューのラベルを確認する
+ * イシューのデータを検証して、必要なフィールドを選択する
  */
-export const hasLabel = (
-  issue: Pick<GitHubIssue, 'labels'>,
-  targetLabel: string
-): boolean => {
-  if (!issue.labels) return false;
+const validateAndPickFields = <T extends IssueField>(
+  data: unknown,
+  fields: readonly T[]
+): PickIssueFields<T> => {
+  if (!data || typeof data !== 'object')
+    throw new Error('Issueの形式が無効です: オブジェクトではありません');
 
-  return issue.labels.some((label) =>
-    typeof label === 'string'
-      ? label === targetLabel
-      : label.name === targetLabel
+  const issue = data as Partial<GitHubIssue>;
+  const missingFields = fields.filter((field) => !issue[field]);
+
+  if (missingFields.length > 0)
+    throw new Error(
+      `必須フィールドが不足しています: ${missingFields.join(', ')}`
+    );
+
+  return fields.reduce(
+    (acc, field) => ({
+      ...acc,
+      [field]: issue[field]
+    }),
+    {} as PickIssueFields<T>
   );
 };
