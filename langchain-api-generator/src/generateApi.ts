@@ -7,7 +7,6 @@ import { parseGeneratedCode } from './utils/codeParser';
 import { validateEnvVars } from './utils/envValidator';
 import { fetchIssueDetails, GitHubIssue } from './github/issue';
 import { fileLoader } from './utils/fileLoader';
-import { execSync } from 'child_process';
 
 type RequiredIssueFields = Pick<GitHubIssue, 'title' | 'body' | 'number'>;
 
