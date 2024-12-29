@@ -39,7 +39,7 @@ const generateApiCode = async ({
     console.log('Prismaスキーマを読み込み中...');
     let prismaSchema: string;
     try {
-      prismaSchema = fileLoader('../apps/server/prisma/schema.prisma');
+      prismaSchema = fileLoader('apps/server/prisma/schema.prisma');
       console.log('Prismaスキーマの読み込み成功:', {
         length: prismaSchema.length,
         firstLine: prismaSchema.split('\n')[0]
