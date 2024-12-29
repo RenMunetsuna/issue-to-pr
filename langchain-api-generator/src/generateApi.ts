@@ -48,6 +48,11 @@ const generateApiCode = async ({
       prismaSchema: prismaSchema?.length ?? 0
     });
 
+    console.log('Issue情報:', {
+      title: issue.title?.length ?? 0,
+      body: issue.body?.length ?? 0
+    });
+
     const formattedPrompt = await prompt.format({
       architecture: docs['architecture'] ?? '',
       schema: docs['schema'] ?? '',
@@ -57,6 +62,8 @@ const generateApiCode = async ({
       title: issue.title ?? '',
       content: issue.body ?? ''
     });
+
+    console.log('フォーマット済みプロンプト長:', formattedPrompt.length);
 
     // モデルの初期化
     const model = new ChatAnthropic({

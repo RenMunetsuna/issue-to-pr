@@ -11,7 +11,10 @@ const WORKSPACE_ROOT = path.resolve(__dirname, '../../');
 export const readDocFile = (filename: string): string => {
   try {
     const filePath = path.join(WORKSPACE_ROOT, 'docs', filename);
-    return readFileSync(filePath, 'utf-8');
+    console.log(`ドキュメントファイルを読み込み中: ${filePath}`);
+    const content = readFileSync(filePath, 'utf-8');
+    console.log(`ドキュメントファイル ${filename} の長さ: ${content.length}`);
+    return content;
   } catch (error) {
     console.warn(
       `ドキュメントファイル ${filename} の読み込みに失敗しました: ${String(
@@ -28,6 +31,7 @@ export const readDocFile = (filename: string): string => {
 export const loadDocuments = (
   documentFiles: string[]
 ): Record<string, string> => {
+  console.log('読み込むドキュメントファイル:', documentFiles);
   const result: Record<string, string> = {};
 
   for (const filename of documentFiles) {
@@ -35,5 +39,6 @@ export const loadDocuments = (
     result[key] = readDocFile(filename);
   }
 
+  console.log('ドキュメント読み込み結果:', Object.keys(result));
   return result;
 };
