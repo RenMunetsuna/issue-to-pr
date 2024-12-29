@@ -12,8 +12,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "exactOptionalPropertyTypes": true,
-    "noEmit": true,
-    "noErrorTruncation": true
+    "noErrorTruncation": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "target": "ES2022"
   },
   "exclude": ["node_modules"]
 }
