@@ -28,34 +28,31 @@ const generateApiCode = async ({
 }: generateApiCodeTypes): Promise<GeneratedFiles> => {
   try {
     // ドキュメントの読み込み
-    const { architecture, schema, controller, database_services } =
-      loadDocuments([
-        'ARCHITECTURE.md',
-        'SCHEMA.md',
-        'CONTROLLER.md',
-        'DATABASE_SERVICES.md'
-      ]);
+    const docs = loadDocuments([
+      'ARCHITECTURE.md',
+      'SCHEMA.md',
+      'CONTROLLER.md',
+      'DATABASE_SERVICES.md'
+    ]);
 
     // prisma schemaを読み込む
     const prismaSchema = fileLoader('apps/server/prisma/schema.prisma');
 
     // プロンプトの作成
     const prompt = createApiGenerationPrompt();
-    console.log('プロンプトパラメータ:', {
-      architecture,
-      schema,
-      controller,
-      database_services,
-      prismaSchema,
-      title: issue.title,
-      content: issue.body
+    console.log('ドキュメントの読み込み結果:', {
+      architecture: docs['architecture']?.length ?? 0,
+      schema: docs['schema']?.length ?? 0,
+      controller: docs['controller']?.length ?? 0,
+      database_services: docs['database_services']?.length ?? 0,
+      prismaSchema: prismaSchema?.length ?? 0
     });
 
     const formattedPrompt = await prompt.format({
-      architecture: architecture ?? '',
-      schema: schema ?? '',
-      controller: controller ?? '',
-      database_services: database_services ?? '',
+      architecture: docs['architecture'] ?? '',
+      schema: docs['schema'] ?? '',
+      controller: docs['controller'] ?? '',
+      database_services: docs['database_services'] ?? '',
       prismaSchema: prismaSchema ?? '',
       title: issue.title ?? '',
       content: issue.body ?? ''
