@@ -104,7 +104,7 @@ export const main = async (): Promise<void> => {
       Number(env.ISSUE_NUMBER),
       ['title', 'body', 'number']
     );
-    console.log('issueを取得', issue);
+    console.log('issueを取得');
 
     if (!issue.title || !issue.body || !issue.number)
       throw new Error('Required issue fields are missing');
