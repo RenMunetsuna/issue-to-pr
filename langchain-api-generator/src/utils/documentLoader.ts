@@ -7,10 +7,8 @@ const WORKSPACE_ROOT = path.resolve(__dirname, '../../');
 
 /**
  * ドキュメントファイルを読み込む
- * @param {string} filename - 読み込むファイル名
- * @returns {string} ファイルの内容
  */
-export const readDocFile = (filename) => {
+export const readDocFile = (filename: string) => {
   try {
     const filePath = path.join(WORKSPACE_ROOT, 'docs', filename);
     return readFileSync(filePath, 'utf-8');
@@ -24,10 +22,10 @@ export const readDocFile = (filename) => {
 
 /**
  * 必要なドキュメントファイルをすべて読み込む
- * @param {string[]} documentFiles - 読み込むドキュメントファイルの配列
- * @returns {Object} 読み込んだドキュメントのオブジェクト
  */
-export const loadAllDocuments = (documentFiles) => {
+export const loadDocuments = (
+  documentFiles: string[]
+): Record<string, string> => {
   return documentFiles.reduce((acc, filename) => {
     const key = filename.replace('.md', '').toLowerCase();
     acc[key] = readDocFile(filename);

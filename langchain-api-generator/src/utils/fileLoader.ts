@@ -1,7 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
-export const fileLoader = (filePath) => {
+/**
+ * 特定のファイルを読み込む
+ * パスはプロジェクトルートからの相対パスで指定する
+ */
+export const fileLoader = (filePath: string) => {
   try {
     const projectRoot = path.resolve(process.cwd(), '..');
     const targetPath = path.resolve(projectRoot, filePath);
