@@ -10,11 +10,26 @@ export const fileLoader = (filePath: string): string => {
     const projectRoot = path.resolve(process.cwd(), '..');
     const targetPath = path.resolve(projectRoot, filePath);
 
+    console.log('ファイル読み込みの詳細:', {
+      requestedPath: filePath,
+      projectRoot,
+      targetPath,
+      cwd: process.cwd(),
+      exists: fs.existsSync(targetPath),
+      isFile: fs.existsSync(targetPath) && fs.statSync(targetPath).isFile()
+    });
+
     if (!fs.existsSync(targetPath))
       throw new Error(`指定されたパスにファイルが存在しません: ${targetPath}`);
 
     const content = fs.readFileSync(targetPath, 'utf8');
     if (!content) throw new Error('ファイルの内容が空です');
+
+    console.log('ファイル読み込み成功:', {
+      path: targetPath,
+      length: content.length,
+      firstLine: content.split('\n')[0]
+    });
 
     return content;
   } catch (error: unknown) {

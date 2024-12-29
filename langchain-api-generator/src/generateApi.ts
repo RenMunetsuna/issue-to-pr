@@ -36,7 +36,18 @@ const generateApiCode = async ({
     ]);
 
     // prisma schemaを読み込む
-    const prismaSchema = fileLoader('apps/server/prisma/schema.prisma');
+    console.log('Prismaスキーマを読み込み中...');
+    let prismaSchema: string;
+    try {
+      prismaSchema = fileLoader('apps/server/prisma/schema.prisma');
+      console.log('Prismaスキーマの読み込み成功:', {
+        length: prismaSchema.length,
+        firstLine: prismaSchema.split('\n')[0]
+      });
+    } catch (error) {
+      console.error('Prismaスキーマの読み込みに失敗:', error);
+      prismaSchema = '';
+    }
 
     // プロンプトの作成
     const prompt = createApiGenerationPrompt();
