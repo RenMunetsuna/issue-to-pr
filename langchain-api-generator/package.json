@@ -1,7 +1,7 @@
 {
   "name": "langchain-api-generator",
   "version": "1.0.0",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node dist/generateApi.js",
@@ -14,14 +14,15 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.18.0",
     "@langchain/anthropic": "^0.1.1",
-    "@langchain/core": "^0.1.48",
     "@langchain/community": "^0.0.36",
-    "langchain": "^0.1.25",
-    "@octokit/rest": "^21.0.2",
+    "@langchain/core": "^0.1.48",
     "@octokit/openapi-types": "^19.1.0",
+    "@octokit/rest": "^21.0.2",
+    "langchain": "^0.1.25",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^20.10.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
