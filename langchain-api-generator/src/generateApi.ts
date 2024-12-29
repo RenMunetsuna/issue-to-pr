@@ -64,12 +64,28 @@ const generateApiCode = async ({
       content: String(issue.body ?? '')
     };
 
-    // パラメータの存在確認
+    // パラメータの詳細なデバッグ情報
+    console.log('プロンプトパラメータの詳細:');
     Object.entries(promptParams).forEach(([key, value]) => {
-      if (!value) {
-        console.warn(`警告: プロンプトパラメータ "${key}" が空です`);
-      }
+      console.log(`${key}:`, {
+        value: value.substring(0, 50) + '...',
+        length: value.length,
+        type: typeof value,
+        isString: typeof value === 'string',
+        isEmpty: !value
+      });
     });
+
+    // 必須パラメータの検証
+    const missingParams = Object.entries(promptParams)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingParams.length > 0) {
+      throw new Error(
+        `必須パラメータが不足しています: ${missingParams.join(', ')}`
+      );
+    }
 
     const formattedPrompt = await prompt.format(promptParams);
     console.log('フォーマット済みプロンプト長:', formattedPrompt.length);
