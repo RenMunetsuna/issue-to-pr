@@ -1,10 +1,9 @@
 /**
  * 生成されたコードをファイル単位でパースする
- * @param {string} content - 生成されたコードの内容
- * @returns {Object} ファイル名とコンテンツのマップ
+ * ### フルパス/ファイル名 ### ファイル内容 の形式でパースする
  */
-export const parseGeneratedCode = (content) => {
-  const files = {};
+export const parseGeneratedCode = (content: string): Record<string, string> => {
+  const files: Record<string, string> = {};
 
   // セクションを分割して処理
   const sections = content
@@ -33,6 +32,9 @@ export const parseGeneratedCode = (content) => {
       files[cleanFileName] = cleanContent;
     }
   }
+
+  if (Object.keys(files).length === 0)
+    throw new Error('ファイルが生成されませんでした');
 
   return files;
 };
