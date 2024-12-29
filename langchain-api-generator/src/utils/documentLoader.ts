@@ -8,7 +8,7 @@ const WORKSPACE_ROOT = path.resolve(__dirname, '../../');
 /**
  * ドキュメントファイルを読み込む
  */
-export const readDocFile = (filename: string) => {
+export const readDocFile = (filename: string): string => {
   try {
     const filePath = path.join(WORKSPACE_ROOT, 'docs', filename);
     return readFileSync(filePath, 'utf-8');
@@ -18,8 +18,8 @@ export const readDocFile = (filename: string) => {
         error
       )}`
     );
+    return '';
   }
-  return '';
 };
 
 /**
@@ -28,9 +28,12 @@ export const readDocFile = (filename: string) => {
 export const loadDocuments = (
   documentFiles: string[]
 ): Record<string, string> => {
-  return documentFiles.reduce<Record<string, string>>((acc, filename) => {
+  const result: Record<string, string> = {};
+
+  for (const filename of documentFiles) {
     const key = filename.replace('.md', '').toLowerCase();
-    acc[key] = readDocFile(filename);
-    return acc;
-  }, {});
+    result[key] = readDocFile(filename);
+  }
+
+  return result;
 };
