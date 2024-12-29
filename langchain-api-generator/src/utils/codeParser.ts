@@ -5,33 +5,20 @@
 export const parseGeneratedCode = (content: string): Record<string, string> => {
   const files: Record<string, string> = {};
 
-  // セクションを分割して処理
-  const sections = content
-    .split(/###\s*([^#\n]+)\s*###/)
-    .filter(Boolean)
-    .map((section) => section.trim());
+  // ファイルブロックを抽出
+  const fileBlocks = content.split(/(?=### apps\/server\/src\/routes\/)/);
 
-  // セクションを2つずつ処理（ファイル名とコンテンツのペア）
-  for (let i = 0; i < sections.length - 1; i += 2) {
-    const fileName = sections[i];
-    const fileContent = sections[i + 1];
+  for (const block of fileBlocks) {
+    // ファイルパスを抽出
+    const pathMatch = block.match(
+      /### (apps\/server\/src\/routes\/[^\s#]+\.ts) ###/
+    );
+    if (!pathMatch?.[1]) continue;
 
-    if (!fileName || !fileContent) continue;
+    const fileName = pathMatch[1];
 
-    // ファイル名のバリデーション
-    if (
-      !fileName.startsWith('apps/server/src/routes/') ||
-      !fileName.endsWith('.ts') ||
-      fileName.includes('：') ||
-      fileName.includes(':') ||
-      /[^\x00-\x7F]/.test(fileName) // 非ASCII文字をチェック
-    ) {
-      console.warn(`不正なファイル名形式をスキップ: ${fileName}`);
-      continue;
-    }
-
-    // コードブロックのバリデーション
-    const codeBlockMatch = fileContent.match(/^```typescript\n([\s\S]*)\n```$/);
+    // コードブロックを抽出
+    const codeBlockMatch = block.match(/```typescript\n([\s\S]*?)\n```/);
     if (!codeBlockMatch?.[1]) {
       console.warn(`不正なコードブロック形式をスキップ: ${fileName}`);
       continue;
@@ -40,6 +27,17 @@ export const parseGeneratedCode = (content: string): Record<string, string> => {
     const cleanContent = codeBlockMatch[1].trim();
     if (!cleanContent) {
       console.warn(`空のコードブロックをスキップ: ${fileName}`);
+      continue;
+    }
+
+    // ファイル名のバリデーション
+    if (
+      !fileName.endsWith('.ts') ||
+      fileName.includes('：') ||
+      fileName.includes(':') ||
+      /[^\x00-\x7F]/.test(fileName) // 非ASCII文字をチェック
+    ) {
+      console.warn(`不正なファイル名形式をスキップ: ${fileName}`);
       continue;
     }
 
