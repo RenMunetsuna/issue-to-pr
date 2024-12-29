@@ -41,14 +41,24 @@ const generateApiCode = async ({
 
     // プロンプトの作成
     const prompt = createApiGenerationPrompt();
-    const formattedPrompt = await prompt.format({
+    console.log('プロンプトパラメータ:', {
       architecture,
       schema,
       controller,
       database_services,
-      prismaSchema: prismaSchema,
+      prismaSchema,
       title: issue.title,
       content: issue.body
+    });
+
+    const formattedPrompt = await prompt.format({
+      architecture: architecture ?? '',
+      schema: schema ?? '',
+      controller: controller ?? '',
+      database_services: database_services ?? '',
+      prismaSchema: prismaSchema ?? '',
+      title: issue.title ?? '',
+      content: issue.body ?? ''
     });
 
     // モデルの初期化
