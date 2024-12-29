@@ -1,9 +1,12 @@
 {
   "name": "langchain-api-generator",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "generate": "node src/generateApi.js"
+    "build": "tsc",
+    "start": "node dist/generateApi.js",
+    "generate": "node dist/generateApi.js",
+    "dev": "ts-node src/generateApi.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +19,10 @@
     "langchain": "^0.1.25",
     "@octokit/rest": "^21.0.2",
     "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
