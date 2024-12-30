@@ -79,12 +79,6 @@ const generateApiCode = async ({
     console.log('LLMにリクエストを送信中...');
     const response = await model.invoke(formattedPrompt);
 
-    calculatePrice(
-      SELECTED_MODEL,
-      response.response_metadata.usage.input_tokens,
-      response.response_metadata.usage.output_tokens
-    );
-
     if (!response.content) throw new Error('LLMからの応答が空です');
     const content = response.content;
     if (typeof content !== 'string')
@@ -93,8 +87,14 @@ const generateApiCode = async ({
     console.log('✅ LLMからのレスポンスを受信');
     console.log('レスポンス:', content);
 
+    calculatePrice(
+      SELECTED_MODEL,
+      response.response_metadata.usage.input_tokens,
+      response.response_metadata.usage.output_tokens
+    );
+
     const files = parseGeneratedCode(content);
-    console.log('生成されたファイル:', Object.keys(files).length, '個');
+    console.log('生成されたファイル数:', Object.keys(files).length);
 
     // Prettierでファイルをフォーマット
     const formattedFiles = await formatGeneratedFiles(files);
