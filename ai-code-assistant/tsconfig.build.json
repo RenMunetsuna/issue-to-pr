@@ -4,9 +4,9 @@
     "noEmit": false,
     "declaration": true,
     "sourceMap": true,
-    "removeComments": true
+    "removeComments": true,
+    "outDir": "./dist"
   },
-  "outDir": "./dist",
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
