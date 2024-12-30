@@ -33,6 +33,13 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
 
+      - name: Build TypeScript
+        run: |
+          cd ai-code-assistant
+          pnpm build
+          echo "Build completed. Contents of dist directory:"
+          ls -la dist/
+
       - name: Generate API code
         id: generate
         run: |
