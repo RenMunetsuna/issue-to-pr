@@ -9,8 +9,6 @@ const WORKSPACE_ROOT = path.resolve(process.cwd(), './');
 export const readDocFile = (filename: string): string => {
   try {
     const filePath = path.join(WORKSPACE_ROOT, 'docs', filename);
-    console.log(`ドキュメントファイルを読み込み中: ${filePath}`);
-
     const content = readFileSync(filePath, 'utf-8');
     console.log(`ドキュメントファイル ${filename} の読み込み結果:`, {
       length: content.length,
