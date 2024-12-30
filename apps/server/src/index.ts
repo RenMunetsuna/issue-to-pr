@@ -54,8 +54,8 @@ const generateOpenapiYaml = async (tag: string) => {
     openapi: {
       openapi: '3.0.0',
       info: {
-        title: 'aeon pet swagger',
-        description: 'aeon pet swagger',
+        title: 'test swagger',
+        description: 'test swagger',
         version: '1.0.0'
       }
     }
