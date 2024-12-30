@@ -18,7 +18,7 @@
     "@langchain/community": "^0.0.36",
     "@langchain/core": "^0.1.48",
     "@octokit/openapi-types": "^19.1.0",
-    "@octokit/rest": "^21.0.2",
+    "@octokit/rest": "^19.0.13",
     "langchain": "^0.1.25",
     "zod": "^3.24.1"
   },
