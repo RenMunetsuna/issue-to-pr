@@ -7,8 +7,9 @@ import {
   loadDocuments,
   parseGeneratedCode,
   validateEnvVars
-} from './utils/index';
-import { fetchIssueDetails, createPullRequest } from './github';
+} from './utils';
+import { fetchIssueDetails } from './github/issue';
+import { createPullRequest } from './github/pullRequest';
 
 export type RequiredIssueFields = {
   title: string;
