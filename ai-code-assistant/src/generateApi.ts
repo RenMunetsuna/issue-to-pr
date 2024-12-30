@@ -57,7 +57,7 @@ const generateApiCode = async ({
     console.log('LLMにリクエストを送信中...');
     const model = new ChatAnthropic({
       anthropicApiKey,
-      modelName: 'claude-3-5-sonnet-20241022'
+      modelName: 'claude-3.5-haiku'
     });
 
     const response = await model.invoke(formattedPrompt);
