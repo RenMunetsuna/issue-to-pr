@@ -71,23 +71,39 @@ const generateApiCode = async ({
 
     console.log('📄 ドキュメントの読み込み状態:', {
       ...logContext,
-      ...docsInfo
+      ...docsInfo,
+      availableKeys: Object.keys(docs)
     });
 
     // プロンプトのパラメータを準備
     const promptParams = {
-      architecture: String(docs['architecture'] ?? ''),
-      schema: String(docs['schema'] ?? ''),
-      controller: String(docs['controller'] ?? ''),
-      database_services: String(docs['database_services'] ?? ''),
-      prismaSchema: String(prismaSchema ?? ''),
-      title: String(issue.title ?? ''),
-      content: String(issue.body ?? '')
+      architecture: docs['architecture'] ?? '',
+      schema: docs['schema'] ?? '',
+      controller: docs['controller'] ?? '',
+      database_services: docs['database_services'] ?? '',
+      prismaSchema: prismaSchema ?? '',
+      title: issue.title ?? '',
+      content: issue.body ?? ''
     };
 
-    // パラメータの検証
+    // パラメータの検証とデバッグ情報の出力
+    const parameterInfo = Object.entries(promptParams).map(([key, value]) => ({
+      key,
+      length: String(value).length,
+      isEmpty: !value || String(value).length === 0,
+      sample:
+        String(value).substring(0, 50) +
+        (String(value).length > 50 ? '...' : '')
+    }));
+
+    console.log('📝 プロンプトパラメータの状態:', {
+      ...logContext,
+      parameters: parameterInfo
+    });
+
+    // 必須パラメータの検証
     const missingParams = Object.entries(promptParams)
-      .filter(([_, value]) => !value)
+      .filter(([_, value]) => value.length === 0)
       .map(([key]) => key);
 
     if (missingParams.length > 0) {
@@ -96,9 +112,10 @@ const generateApiCode = async ({
       );
     }
 
+    const formattedPrompt = await prompt.format(promptParams);
     console.log('🤖 LLMにリクエストを送信中...', {
       ...logContext,
-      promptLength: (await prompt.format(promptParams)).length
+      promptLength: formattedPrompt.length
     });
 
     const model = new ChatAnthropic({
@@ -106,7 +123,7 @@ const generateApiCode = async ({
       modelName: 'claude-3-5-sonnet-20241022'
     });
 
-    const response = await model.invoke(await prompt.format(promptParams));
+    const response = await model.invoke(formattedPrompt);
     if (!response.content) throw new Error('LLMからの応答が空です');
     const content = response.content;
     if (typeof content !== 'string')
