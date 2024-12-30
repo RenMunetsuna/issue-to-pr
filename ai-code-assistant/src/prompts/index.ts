@@ -1,1 +1,1 @@
-export * from './apiGenerationPrompt.js';
+export * from './apiGenerationPrompt';

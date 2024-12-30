@@ -1,2 +1,2 @@
-export * from './issue.js';
-export * from './pullRequest.js';
+export * from './issue';
+export * from './pullRequest';

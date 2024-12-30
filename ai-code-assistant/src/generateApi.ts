@@ -1,16 +1,20 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { Octokit } from '@octokit/rest';
-import { createApiGenerationPrompt } from './prompts';
+import { createApiGenerationPrompt } from './prompts/apiGenerationPrompt';
 import {
   fileLoader,
   formatGeneratedFiles,
   loadDocuments,
   parseGeneratedCode,
   validateEnvVars
-} from './utils';
-import { fetchIssueDetails, GitHubIssue, createPullRequest } from './github';
+} from './utils/index';
+import { fetchIssueDetails, createPullRequest } from './github';
 
-type RequiredIssueFields = Pick<GitHubIssue, 'title' | 'body' | 'number'>;
+export type RequiredIssueFields = {
+  title: string;
+  body: string;
+  number: number;
+};
 
 type generateApiCodeTypes = {
   anthropicApiKey: string;
