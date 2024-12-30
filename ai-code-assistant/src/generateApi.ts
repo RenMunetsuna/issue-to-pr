@@ -90,11 +90,7 @@ const generateApiCode = async ({
     console.log('レスポンス:', content);
     console.log('metadata:', response.response_metadata);
 
-    calculatePrice(
-      SELECTED_MODEL,
-      response.response_metadata.usage.input_tokens,
-      response.response_metadata.usage.output_tokens
-    );
+    calculatePrice(SELECTED_MODEL, response.response_metadata);
 
     const files = parseGeneratedCode(content);
     console.log('生成されたファイル数:', Object.keys(files).length);
