@@ -1,12 +1,14 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { Octokit } from '@octokit/rest';
-import { createApiGenerationPrompt } from './prompts/apiGenerationPrompt.js';
-import { createPullRequest } from './github/pullRequest.js';
-import { loadDocuments } from './utils/documentLoader.js';
-import { parseGeneratedCode } from './utils/codeParser.js';
-import { validateEnvVars } from './utils/envValidator.js';
-import { fetchIssueDetails, GitHubIssue } from './github/issue.js';
-import { fileLoader } from './utils/fileLoader.js';
+import { createApiGenerationPrompt } from './prompts';
+import {
+  fileLoader,
+  formatGeneratedFiles,
+  loadDocuments,
+  parseGeneratedCode,
+  validateEnvVars
+} from './utils';
+import { fetchIssueDetails, GitHubIssue, createPullRequest } from './github';
 
 type RequiredIssueFields = Pick<GitHubIssue, 'title' | 'body' | 'number'>;
 
@@ -71,7 +73,10 @@ const generateApiCode = async ({
     const files = parseGeneratedCode(content);
     console.log('生成されたファイル:', Object.keys(files).length, '個');
 
-    return files;
+    // Prettierでファイルをフォーマット
+    const formattedFiles = await formatGeneratedFiles(files);
+
+    return formattedFiles;
   } catch (error) {
     console.error(
       '❌ エラーが発生しました:',
