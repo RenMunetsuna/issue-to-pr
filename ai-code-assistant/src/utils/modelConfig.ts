@@ -1,5 +1,6 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 export const MODEL_NAMES = {
@@ -22,20 +23,33 @@ export const MODEL_NAMES = {
       name: 'gpt-4o-mini-2024-07-18',
       provider: 'openai' as const
     }
+  },
+  GOOGLE: {
+    GEMINI_EXP: {
+      name: 'gemini-exp-1206',
+      provider: 'google' as const
+    },
+    GEMINI_2_0_FLASH_THINKING_EXP_1219: {
+      name: 'gemini-2.0-flash-thinking-exp-1219',
+      provider: 'google' as const
+    }
   }
 } as const;
 
 export type ModelConfig = {
   name: string;
-  provider: 'anthropic' | 'openai';
+  provider: 'anthropic' | 'openai' | 'google';
 };
 
 type AnthropicModels =
   (typeof MODEL_NAMES.ANTHROPIC)[keyof typeof MODEL_NAMES.ANTHROPIC];
 type OpenAIModels =
   (typeof MODEL_NAMES.OPENAI)[keyof typeof MODEL_NAMES.OPENAI];
-export type ModelName = AnthropicModels | OpenAIModels;
+type GoogleModels =
+  (typeof MODEL_NAMES.GOOGLE)[keyof typeof MODEL_NAMES.GOOGLE];
+export type ModelName = AnthropicModels | OpenAIModels | GoogleModels;
 
+// anthropic
 const createAnthropicModel = (
   anthropicApiKey: string,
   modelConfig: ModelConfig
@@ -46,6 +60,7 @@ const createAnthropicModel = (
   });
 };
 
+// openai
 const createOpenAIModel = (
   openaiApiKey: string,
   modelConfig: ModelConfig
@@ -56,10 +71,22 @@ const createOpenAIModel = (
   });
 };
 
+// google
+const createGoogleModel = (
+  googleApiKey: string,
+  modelConfig: ModelConfig
+): BaseChatModel => {
+  return new ChatGoogleGenerativeAI({
+    apiKey: googleApiKey,
+    modelName: modelConfig.name
+  });
+};
+
 // モデルを生成する
 export const createModel = (
   anthropicApiKey: string,
   openaiApiKey: string,
+  googleApiKey: string,
   modelConfig: ModelConfig
 ): BaseChatModel => {
   switch (modelConfig.provider) {
@@ -67,6 +94,8 @@ export const createModel = (
       return createAnthropicModel(anthropicApiKey, modelConfig);
     case 'openai':
       return createOpenAIModel(openaiApiKey, modelConfig);
+    case 'google':
+      return createGoogleModel(googleApiKey, modelConfig);
     default:
       throw new Error(`未対応のモデルです: ${modelConfig.name}`);
   }

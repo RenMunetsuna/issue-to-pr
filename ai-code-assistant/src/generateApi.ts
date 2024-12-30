@@ -21,16 +21,12 @@ export type RequiredIssueFields = {
 type generateApiCodeTypes = {
   anthropicApiKey: string;
   openaiApiKey: string;
+  googleApiKey: string;
   issue: RequiredIssueFields;
 };
 
 type GeneratedFiles = {
   [key: string]: string;
-};
-
-type ResponseMetadata = {
-  input_tokens: number;
-  output_tokens: number;
 };
 
 /**
@@ -44,6 +40,7 @@ const SELECTED_MODEL = MODEL_NAMES.ANTHROPIC.CLAUDE_3_SONNET;
 const generateApiCode = async ({
   anthropicApiKey,
   openaiApiKey,
+  googleApiKey,
   issue
 }: generateApiCodeTypes): Promise<GeneratedFiles> => {
   try {
@@ -74,7 +71,12 @@ const generateApiCode = async ({
     console.log('プロンプトを生成中...');
     const formattedPrompt = await prompt.format(promptParams);
 
-    const model = createModel(anthropicApiKey, openaiApiKey, SELECTED_MODEL);
+    const model = createModel(
+      anthropicApiKey,
+      openaiApiKey,
+      googleApiKey,
+      SELECTED_MODEL
+    );
 
     console.log('LLMにリクエストを送信中...');
     const response = await model.invoke(formattedPrompt);
@@ -117,6 +119,7 @@ export const main = async (): Promise<void> => {
     const env = validateEnvVars([
       'ANTHROPIC_API_KEY',
       'OPENAI_API_KEY',
+      'GOOGLE_API_KEY',
       'GITHUB_TOKEN',
       'ISSUE_NUMBER',
       'REPO_OWNER',
@@ -143,6 +146,7 @@ export const main = async (): Promise<void> => {
     const generatedFiles = await generateApiCode({
       anthropicApiKey: env.ANTHROPIC_API_KEY,
       openaiApiKey: env.OPENAI_API_KEY,
+      googleApiKey: env.GOOGLE_API_KEY,
       issue: {
         title: issue.title,
         body: issue.body,
