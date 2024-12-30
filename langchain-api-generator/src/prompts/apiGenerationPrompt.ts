@@ -6,27 +6,27 @@ export const createApiGenerationPrompt = () => {
 以下のプロジェクトのアーキテクチャとガイドラインを確認してください
 
 # プロジェクトアーキテクチャ
-\${architecture}
+{architecture}
 
 # スキーマガイドライン
-\${schema}
+{schema}
 
 # コントローラーガイドライン
-\${controller}
+{controller}
 
 # データベースサービスガイドライン
-\${database_services}
+{database_services}
 
 # Prismaスキーマ
-\${prismaSchema}
+{prismaSchema}
 
 Prismaのスキーマを確認して、データベースのカラム名や型を確認してください
 今回作成するファイルは全て同じディレクトリに配置してください
 
 # Issue情報
-タイトル: \${title}
+タイトル: {title}
 内容:
-\${content}
+{content}
 
 以下の要件に従ってください：
 1. コードは TypeScript で記述してください
