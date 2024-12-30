@@ -1,6 +1,6 @@
 import prettier from 'prettier';
 
-type GeneratedFiles = {
+export type GeneratedFiles = {
   [key: string]: string;
 };
 
