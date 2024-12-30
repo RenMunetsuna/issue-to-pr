@@ -17,6 +17,7 @@
     "@langchain/anthropic": "^0.1.1",
     "@langchain/community": "^0.0.36",
     "@langchain/core": "^0.1.48",
+    "@langchain/openai": "^0.3.16",
     "@octokit/openapi-types": "^19.1.0",
     "@octokit/rest": "^19.0.13",
     "langchain": "^0.1.25",

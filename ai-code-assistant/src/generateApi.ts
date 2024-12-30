@@ -1,4 +1,3 @@
-import { ChatAnthropic } from '@langchain/anthropic';
 import { Octokit } from '@octokit/rest';
 import { createApiGenerationPrompt } from './prompts/apiGenerationPrompt';
 import {
@@ -8,6 +7,8 @@ import {
   parseGeneratedCode,
   validateEnvVars
 } from './utils';
+import { calculatePrice } from './utils/priceCalculator';
+import { MODEL_NAMES, createModel } from './utils/modelConfig';
 import { fetchIssueDetails } from './github/issue';
 import { createPullRequest } from './github/pullRequest';
 
@@ -19,6 +20,7 @@ export type RequiredIssueFields = {
 
 type generateApiCodeTypes = {
   anthropicApiKey: string;
+  openaiApiKey: string;
   issue: RequiredIssueFields;
 };
 
@@ -27,10 +29,16 @@ type GeneratedFiles = {
 };
 
 /**
+ * -------------- 使用するモデルを選択する --------------
+ */
+const SELECTED_MODEL = MODEL_NAMES.ANTHROPIC.CLAUDE_3_HAIKU;
+
+/**
  * APIコードを生成する
  */
 const generateApiCode = async ({
   anthropicApiKey,
+  openaiApiKey,
   issue
 }: generateApiCodeTypes): Promise<GeneratedFiles> => {
   try {
@@ -61,14 +69,17 @@ const generateApiCode = async ({
     console.log('プロンプトを生成中...');
     const formattedPrompt = await prompt.format(promptParams);
 
-    console.log('LLMにリクエストを送信中...');
-    const model = new ChatAnthropic({
-      anthropicApiKey,
-      modelName: 'claude-3-5-haiku-20241022'
-    });
+    const model = createModel(anthropicApiKey, openaiApiKey, SELECTED_MODEL);
 
+    console.log('LLMにリクエストを送信中...');
     const response = await model.invoke(formattedPrompt);
-    console.log('LLMからの応答:', response);
+
+    calculatePrice(
+      SELECTED_MODEL,
+      response.response_metadata.input_tokens,
+      response.response_metadata.output_tokens
+    );
+
     if (!response.content) throw new Error('LLMからの応答が空です');
     const content = response.content;
     if (typeof content !== 'string')
@@ -100,6 +111,7 @@ export const main = async (): Promise<void> => {
     console.log('環境変数を検証中...');
     const env = validateEnvVars([
       'ANTHROPIC_API_KEY',
+      'OPENAI_API_KEY',
       'GITHUB_TOKEN',
       'ISSUE_NUMBER',
       'REPO_OWNER',
@@ -125,6 +137,7 @@ export const main = async (): Promise<void> => {
     // コード生成処理
     const generatedFiles = await generateApiCode({
       anthropicApiKey: env.ANTHROPIC_API_KEY,
+      openaiApiKey: env.OPENAI_API_KEY,
       issue: {
         title: issue.title,
         body: issue.body,
