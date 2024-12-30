@@ -1,7 +1,6 @@
 {
   "name": "ai-code-assistant",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "start": "node dist/generateApi.js",
