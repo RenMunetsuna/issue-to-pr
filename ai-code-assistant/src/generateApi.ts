@@ -73,7 +73,8 @@ const generateApiCode = async ({
     if (typeof content !== 'string')
       throw new Error('LLMの応答が文字列ではありません');
 
-    console.log('✅ LLMからの応答を受信');
+    console.log('✅ LLMからのレスポンスを受信');
+    console.log('レスポンス:', content);
 
     const files = parseGeneratedCode(content);
     console.log('生成されたファイル:', Object.keys(files).length, '個');
