@@ -32,7 +32,7 @@ type GeneratedFiles = {
 /**
  * -------------- 使用するモデルを選択する --------------
  */
-const SELECTED_MODEL = MODEL_NAMES.GOOGLE.GEMINI_EXP;
+const SELECTED_MODEL = MODEL_NAMES.ANTHROPIC.CLAUDE_3_SONNET;
 
 /**
  * APIコードを生成する
