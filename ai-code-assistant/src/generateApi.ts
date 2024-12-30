@@ -28,6 +28,11 @@ type GeneratedFiles = {
   [key: string]: string;
 };
 
+type ResponseMetadata = {
+  input_tokens: number;
+  output_tokens: number;
+};
+
 /**
  * -------------- 使用するモデルを選択する --------------
  */
@@ -76,8 +81,8 @@ const generateApiCode = async ({
 
     calculatePrice(
       SELECTED_MODEL,
-      response.response_metadata.input_tokens,
-      response.response_metadata.output_tokens
+      response.response_metadata.usage.input_tokens,
+      response.response_metadata.usage.output_tokens
     );
 
     if (!response.content) throw new Error('LLMからの応答が空です');
