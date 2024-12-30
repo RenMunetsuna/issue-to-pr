@@ -44,12 +44,12 @@ jobs:
       - name: Install dependencies
         run: |
           pnpm install
-          cd langchain-api-generator
+          cd ai-code-assistant
           pnpm install
 
       - name: Build TypeScript
         run: |
-          cd langchain-api-generator
+          cd ai-code-assistant
           pnpm build
           echo "Build completed. Contents of dist directory:"
           ls -la dist/
@@ -57,7 +57,7 @@ jobs:
       - name: Generate API code
         id: generate
         run: |
-          cd langchain-api-generator
+          cd ai-code-assistant
           echo "Starting API generation..."
           echo "Running generate script..."
           DEBUG=langchain pnpm generate || {
