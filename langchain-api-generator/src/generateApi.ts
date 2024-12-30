@@ -26,8 +26,13 @@ const generateApiCode = async ({
   anthropicApiKey,
   issue
 }: generateApiCodeTypes): Promise<GeneratedFiles> => {
+  const logContext = {
+    issueTitle: issue.title?.substring(0, 50),
+    issueNumber: issue.number
+  };
+
   try {
-    // ドキュメントの読み込み
+    console.log('📚 ドキュメントの読み込みを開始...', logContext);
     const docs = loadDocuments([
       'ARCHITECTURE.md',
       'SCHEMA.md',
@@ -35,33 +40,38 @@ const generateApiCode = async ({
       'DATABASE_SERVICES.md'
     ]);
 
-    // prisma schemaを読み込む
-    console.log('Prismaスキーマを読み込み中...');
+    console.log('🔍 Prismaスキーマを読み込み中...', logContext);
     let prismaSchema: string;
     try {
       prismaSchema = fileLoader('apps/server/prisma/schema.prisma');
-      console.log('Prismaスキーマの読み込み成功:', {
-        length: prismaSchema.length,
+      console.log('✅ Prismaスキーマの読み込み成功:', {
+        ...logContext,
+        schemaLength: prismaSchema.length,
         firstLine: prismaSchema.split('\n')[0]
       });
     } catch (error) {
-      console.error('Prismaスキーマの読み込みに失敗:', error);
+      console.error('❌ Prismaスキーマの読み込みに失敗:', {
+        ...logContext,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       prismaSchema = '';
     }
 
-    // プロンプトの作成
+    console.log('🔧 プロンプトの生成を開始...', logContext);
     const prompt = createApiGenerationPrompt();
-    console.log('ドキュメントの読み込み結果:', {
+
+    const docsInfo = {
       architecture: docs['architecture']?.length ?? 0,
       schema: docs['schema']?.length ?? 0,
       controller: docs['controller']?.length ?? 0,
       database_services: docs['database_services']?.length ?? 0,
       prismaSchema: prismaSchema?.length ?? 0
-    });
+    };
 
-    console.log('Issue情報:', {
-      title: issue.title?.length ?? 0,
-      body: issue.body?.length ?? 0
+    console.log('📄 ドキュメントの読み込み状態:', {
+      ...logContext,
+      ...docsInfo
     });
 
     // プロンプトのパラメータを準備
@@ -75,19 +85,7 @@ const generateApiCode = async ({
       content: String(issue.body ?? '')
     };
 
-    // パラメータの詳細なデバッグ情報
-    console.log('プロンプトパラメータの詳細:');
-    Object.entries(promptParams).forEach(([key, value]) => {
-      console.log(`${key}:`, {
-        value: value.substring(0, 50) + '...',
-        length: value.length,
-        type: typeof value,
-        isString: typeof value === 'string',
-        isEmpty: !value
-      });
-    });
-
-    // 必須パラメータの検証
+    // パラメータの検証
     const missingParams = Object.entries(promptParams)
       .filter(([_, value]) => !value)
       .map(([key]) => key);
@@ -98,42 +96,58 @@ const generateApiCode = async ({
       );
     }
 
-    const formattedPrompt = await prompt.format(promptParams);
-    console.log('フォーマット済みプロンプト長:', formattedPrompt.length);
+    console.log('🤖 LLMにリクエストを送信中...', {
+      ...logContext,
+      promptLength: (await prompt.format(promptParams)).length
+    });
 
-    // モデルの初期化
     const model = new ChatAnthropic({
       anthropicApiKey,
       modelName: 'claude-3-5-sonnet-20241022'
     });
 
-    // リクエストの送信
-    const response = await model.invoke(formattedPrompt);
-    if (!response.content) throw new Error('レスポンスが空です');
+    const response = await model.invoke(await prompt.format(promptParams));
+    if (!response.content) throw new Error('LLMからの応答が空です');
     const content = response.content;
-    if (typeof content !== 'string') throw new Error('Expected string content');
+    if (typeof content !== 'string')
+      throw new Error('LLMの応答が文字列ではありません');
 
-    console.log('LLMのレスポンス:', content);
+    console.log('✅ LLMからの応答を受信', {
+      ...logContext,
+      responseLength: content.length
+    });
 
-    // 生成されたコードをファイル単位でパース
     const files = parseGeneratedCode(content);
-
-    console.log('生成されたファイル:', Object.keys(files));
+    console.log('✨ 生成されたファイル:', {
+      ...logContext,
+      fileCount: Object.keys(files).length,
+      files: Object.keys(files)
+    });
 
     return files;
   } catch (error) {
-    console.error(
-      'APIコード生成中にエラーが発生しました:',
-      error instanceof Error ? error.message : String(error)
-    );
+    const errorDetails = {
+      ...logContext,
+      phase: 'APIコード生成',
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    };
+    console.error('❌ エラーが発生しました:', errorDetails);
     throw error;
   }
 };
 
 // GitHub Actions から呼び出されるメイン関数
 export const main = async (): Promise<void> => {
+  const startTime = Date.now();
+  const logContext = {
+    startTime: new Date().toISOString()
+  };
+
   try {
-    // 環境変数の検証
+    console.log('🚀 処理を開始します', logContext);
+
+    console.log('🔐 環境変数を検証中...');
     const env = validateEnvVars([
       'ANTHROPIC_API_KEY',
       'GITHUB_TOKEN',
@@ -146,7 +160,11 @@ export const main = async (): Promise<void> => {
       auth: env.GITHUB_TOKEN
     });
 
-    // イシューを取得
+    console.log('📥 GitHubイシューを取得中...', {
+      ...logContext,
+      issueNumber: env.ISSUE_NUMBER
+    });
+
     const issue = await fetchIssueDetails(
       octokit,
       env.REPO_OWNER,
@@ -154,13 +172,17 @@ export const main = async (): Promise<void> => {
       Number(env.ISSUE_NUMBER),
       ['title', 'body', 'number']
     );
-    console.log('issueを取得');
 
-    if (!issue.title || !issue.body || !issue.number)
-      throw new Error('Required issue fields are missing');
+    if (!issue.title || !issue.body || !issue.number) {
+      throw new Error('イシューの必須フィールドが不足しています');
+    }
 
-    console.log('コード生成リクエスト中...');
-    // コードを生成
+    console.log('🎯 コード生成を開始...', {
+      ...logContext,
+      issueTitle: issue.title.substring(0, 50),
+      issueNumber: issue.number
+    });
+
     const generatedFiles = await generateApiCode({
       anthropicApiKey: env.ANTHROPIC_API_KEY,
       issue: {
@@ -169,9 +191,12 @@ export const main = async (): Promise<void> => {
         number: issue.number
       }
     });
-    console.log('コード生成完了');
 
-    // プルリクエストを作成
+    console.log('📤 プルリクエストを作成中...', {
+      ...logContext,
+      fileCount: Object.keys(generatedFiles).length
+    });
+
     await createPullRequest({
       octokit,
       owner: env.REPO_OWNER,
@@ -182,12 +207,21 @@ export const main = async (): Promise<void> => {
         content
       }))
     });
-    console.log('プルリクエストの作成完了');
+
+    const executionTime = Date.now() - startTime;
+    console.log('✅ 処理が完了しました', {
+      ...logContext,
+      executionTimeMs: executionTime,
+      executionTimeFormatted: `${(executionTime / 1000).toFixed(2)}秒`
+    });
   } catch (error) {
-    console.error(
-      'エラー:',
-      error instanceof Error ? error.message : String(error)
-    );
+    const errorDetails = {
+      ...logContext,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      executionTimeMs: Date.now() - startTime
+    };
+    console.error('❌ 処理が失敗しました:', errorDetails);
     process.exit(1);
   }
 };
