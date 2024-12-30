@@ -8,7 +8,9 @@ assignees: ''
 
 ### エンドポイント
 
-<!-- 例:POST /users/:userId/profile -->
+<!-- 例:
+POST /users/:userId/profile
+ -->
 
 ### リクエスト
 
