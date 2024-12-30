@@ -6,7 +6,7 @@ on:
       NPM_TOKEN:
         required: true
   issues:
-    types: [opened, labeled]
+    types: [labeled]
 
 permissions:
   contents: write
@@ -15,9 +15,7 @@ permissions:
 
 jobs:
   generate-api:
-    if: |
-      contains(github.event.issue.labels.*.name, 'api-generate') &&
-      (github.event.action == 'opened' || (github.event.action == 'labeled' && github.event.label.name == 'api-generate'))
+    if: github.event.label.name == 'api-generate'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
