@@ -68,6 +68,7 @@ const generateApiCode = async ({
     });
 
     const response = await model.invoke(formattedPrompt);
+    console.log('LLMからの応答:', response);
     if (!response.content) throw new Error('LLMからの応答が空です');
     const content = response.content;
     if (typeof content !== 'string')
