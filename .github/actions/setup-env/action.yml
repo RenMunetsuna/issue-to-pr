@@ -1,0 +1,24 @@
+name: Setup Environment
+description: Setup for test & build
+inputs:
+  token:
+    description: 'Personal Access Token'
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      id: setup_node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.0.0
+
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
+    - name: Install dependencies
+      env:
+        NPM_TOKEN: ${{ inputs.token }}
+      run: pnpm i --frozen-lockfile
+      shell: bash

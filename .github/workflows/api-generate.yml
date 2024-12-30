@@ -1,6 +1,10 @@
 name: API Generate Workflow
 
 on:
+  workflow_call:
+    secrets:
+      NPM_TOKEN:
+        required: true
   issues:
     types: [opened, labeled]
 
@@ -15,44 +19,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout branch
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Get pnpm store directory
-        shell: bash
+      - name: Set Environment Variable
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          echo "NPM_TOKEN=$NPM_TOKEN" >> $GITHUB_ENV
+        env:
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: |
-          pnpm install
-          cd ai-code-assistant
-          pnpm install
-
-      - name: Build TypeScript
-        run: |
-          cd ai-code-assistant
-          pnpm build
-          echo "Build completed. Contents of dist directory:"
-          ls -la dist/
+          token: ${{ secrets.NPM_TOKEN }}
 
       - name: Generate API code
         id: generate
@@ -94,7 +73,7 @@ jobs:
                 console.log('PRが作成されていません');
                 core.setFailed('PRの作成に失敗しました');
               } else {
-                console.log('PRが正常に作成されました:', prs.data[0].html_url);
+                console.log('✅ PRが正常に作成されました:', prs.data[0].html_url);
               }
             } catch (error) {
               console.log('PRの確認中にエラーが発生しました:', error);
