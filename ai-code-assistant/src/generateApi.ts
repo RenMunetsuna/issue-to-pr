@@ -36,7 +36,7 @@ type ResponseMetadata = {
 /**
  * -------------- 使用するモデルを選択する --------------
  */
-const SELECTED_MODEL = MODEL_NAMES.ANTHROPIC.CLAUDE_3_HAIKU;
+const SELECTED_MODEL = MODEL_NAMES.ANTHROPIC.CLAUDE_3_SONNET;
 
 /**
  * APIコードを生成する

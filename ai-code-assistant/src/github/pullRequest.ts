@@ -76,8 +76,8 @@ export const createPullRequest = async ({
   await octokit.pulls.create({
     owner,
     repo,
-    title: `${issue.title} (#${issueNumber}-${timestamp})`,
-    body: `Closes #${issueNumber}`,
+    title: `${issue.title} (#${issueNumber}-${timestamp})`, // タイトルの重複回避のためtimestampを追加
+    body: `- #${issueNumber}`,
     head: branchName,
     base: defaultBranch
   });
