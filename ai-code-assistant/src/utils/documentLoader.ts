@@ -1,9 +1,7 @@
 import { readFileSync } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const WORKSPACE_ROOT = path.resolve(__dirname, '../../');
+const WORKSPACE_ROOT = path.resolve(process.cwd(), './');
 
 /**
  * ドキュメントファイルを読み込む
