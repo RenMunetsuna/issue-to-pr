@@ -1,0 +1,11 @@
+{
+  "issue": {
+    "number": 1,
+    "labels": [{"name": "api-generate"}],
+    "body": "Test API generation"
+  },
+  "repository": {
+    "name": "issue-to-pr",
+    "owner": {"login": "RenMunetsuna"}
+  }
+}
