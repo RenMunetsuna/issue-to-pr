@@ -88,6 +88,7 @@ const generateApiCode = async ({
 
     console.log('✅ LLMからのレスポンスを受信');
     console.log('レスポンス:', content);
+    console.log('metadata:', response.response_metadata);
 
     calculatePrice(
       SELECTED_MODEL,

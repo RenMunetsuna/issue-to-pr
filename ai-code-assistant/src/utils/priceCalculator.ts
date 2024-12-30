@@ -5,7 +5,7 @@ type TokenPrices = {
   output: number;
 };
 
-// モデルごとのトークン料金
+//
 const MODEL_PRICES: Record<string, TokenPrices> = {
   [MODEL_NAMES.ANTHROPIC.CLAUDE_3_HAIKU.name]: {
     input: 0.8,
