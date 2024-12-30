@@ -15,9 +15,10 @@ permissions:
 
 jobs:
   generate-api:
-    if: contains(github.event.issue.labels.*.name, 'api-generate')
+    if: |
+      contains(github.event.issue.labels.*.name, 'api-generate') &&
+      (github.event.action == 'opened' || (github.event.action == 'labeled' && github.event.label.name == 'api-generate'))
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
